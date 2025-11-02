@@ -21,6 +21,7 @@ void setup() {
   create_route_map();
 
   RouteInfo info[5];
+  enable_debug = true;
   get_stop_info(407, info, 5);
 
   for(int i = 0; i < 5; i++) {
@@ -34,6 +35,20 @@ void setup() {
     Serial.println(info[i].eta);
   }
 
+  memset(info, 0, sizeof(info));
+
+  get_stop_info(407, info, 5, 5);
+
+  for(int i = 0; i < 5; i++) {
+    Serial.print("Route: ");
+    Serial.print(info[i].shortName);
+    Serial.print(", ");
+    Serial.print(info[i].longName);
+    Serial.print(", Delay: ");
+    Serial.print(info[i].delay);
+    Serial.print(" min, ETA: ");
+    Serial.println(info[i].eta);
+  }
 
 }
 

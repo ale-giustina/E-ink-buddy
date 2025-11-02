@@ -11,9 +11,10 @@ struct RouteInfo {
     String eta;
 };
 
-// The map that stores route info (routeId → [shortName, longName])
-static std::map<int, String[2]> routeMap;
+extern bool enable_debug;
 
+// The map that stores route info (routeId → [shortName, longName])
+extern std::map<int, std::array<String, 2>> routeMap;
 
 /**
  * @brief Fetches all routes from the API and populates routeMap.
@@ -29,7 +30,9 @@ void create_route_map();
  * @param stopId The stop ID to query.
  * @param info Pointer to a RouteInfo array that will be filled with the results.
  * @param length Number of trips to fetch.
+ * @param filterRouteName (Optional) If provided, only trips matching this route name will be included.
+ * 
  */
-void get_stop_info(int stopId, RouteInfo* info, int length);
+void get_stop_info(int stopId, RouteInfo* info, int length, int filterRouteName=-1);
 
 #endif
