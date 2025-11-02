@@ -4,8 +4,9 @@
 #include <HTTPClient.h>
 #include <ArduinoJson.h>
 #include <map>
+#include <tr_api.h>
 
-std::map<int, String> routeMap;
+
 
 void setup() {
 
@@ -17,41 +18,20 @@ void setup() {
   }
   Serial.println("Connected to WiFi");
 
-  {
-    HTTPClient routeClient;
-    String url = String(TT_BASE_URL) + "/routes?areas=23";
-    routeClient.begin(url);
-    routeClient.setAuthorization(TT_USER, TT_PASS);
-    int httpCode = routeClient.GET();
-    if (httpCode == 200) {
-      String payload = routeClient.getString();
-      Serial.println(payload);
-      JsonDocument doc;
-      
-      if (!deserializeJson(doc, payload)) {
-        
-        JsonArray arr = doc.as<JsonArray>();
+  create_route_map();
 
-        for (JsonObject elem : arr) {
-          Serial.print(elem["routeId"].as<int>());
-          Serial.print(" - ");
-          Serial.print(elem["routeShortName"].as<const char*>());
-          Serial.print(" - ");
-          Serial.println(elem["routeLongName"].as<const char*>());
-          int routeId = elem["routeId"].as<int>();
-          const char* shortName = elem["routeShortName"];
-          if (shortName != nullptr) {
-            routeMap[routeId] = String(shortName);
-          }
-        }
-        Serial.printf("Loaded %d routes\n", (int)routeMap.size());
-      } else {
-        Serial.println("Failed to parse routes JSON");
-      }
-    } else {
-      Serial.printf("Failed to fetch routes, HTTP code: %d\n", httpCode);
-    }
-    routeClient.end();
+  RouteInfo info[5];
+  get_stop_info(407, info, 5);
+
+  for(int i = 0; i < 5; i++) {
+    Serial.print("Route: ");
+    Serial.print(info[i].shortName);
+    Serial.print(", ");
+    Serial.print(info[i].longName);
+    Serial.print(", Delay: ");
+    Serial.print(info[i].delay);
+    Serial.print(" min, ETA: ");
+    Serial.println(info[i].eta);
   }
 
 
