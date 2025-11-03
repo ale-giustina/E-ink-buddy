@@ -1,25 +1,7 @@
 #include <tr_api.h>
-#include <Arduino.h>
-#include "secrets.h"
-#include <WiFi.h>
-#include <HTTPClient.h>
-#include <ArduinoJson.h>
-#include <map>
 
-bool enable_debug = false;
 
 std::map<int, std::array<String, 2>> routeMap;
-
-void debug_println(const String& message) {
-    if (enable_debug) {
-        Serial.println(message);
-    }
-}
-void debug_print(const String& message) {
-    if (enable_debug) {
-        Serial.print(message);
-    }
-}
 
 void create_route_map(){
 

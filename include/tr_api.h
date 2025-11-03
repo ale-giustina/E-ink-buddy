@@ -2,7 +2,11 @@
 #define TR_API_H
 
 #include <Arduino.h>
+#include "secrets.h"
+#include <HTTPClient.h>
+#include <ArduinoJson.h>
 #include <map>
+#include <helpers.h>
 
 struct RouteInfo {
     String shortName;
@@ -75,5 +79,7 @@ void get_stop_info(int stopId, RouteInfo* info, int length);
  * 
  */
 void get_stop_info_filtered(int stopId, RouteInfo* info, int length, int routeId, bool direction);
+
+
 
 #endif

@@ -2,9 +2,13 @@
 
 ## Modules
 - [X] Create transport API module to handle arrivals data fetching
-- [X] Filter data based on bus (in progress)
+- [X] Filter data based on bus
 - [ ] Create weather API module that supports multiple modes of display (24h, 5d, precipitations...) using open-weather
-- [ ] Create timing module to sync every X minutes over NTP
+- [X] 5 Days weather display
+- [ ] 24 weather Hours display
+- [ ] Temperature and precipitation graph (?)
+- [X] Create timing module to sync every X minutes over NTP
+- [ ] Resilient wifi error handler
 - [ ] Create task manager to call respective processes to enable everything to run on time
 - [ ] Create renderer module to manage the E-ink display
 - [ ] Handle buttons and state switching between: weather types, lighting sequences and bus filter modes
