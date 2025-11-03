@@ -17,11 +17,11 @@ void setup() {
     Serial.println("Connecting to WiFi...");
   }
   Serial.println("Connected to WiFi");
-
+  enable_debug = false;
   create_route_map();
 
   RouteInfo info[5];
-  enable_debug = true;
+  
   get_stop_info(407, info, 5);
 
   for(int i = 0; i < 5; i++) {
@@ -37,7 +37,7 @@ void setup() {
 
   memset(info, 0, sizeof(info));
 
-  get_stop_info(407, info, 5, 5);
+  get_stop_info_filtered(407, info, 5, 400, false);
 
   for(int i = 0; i < 5; i++) {
     Serial.print("Route: ");

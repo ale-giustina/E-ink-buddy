@@ -30,9 +30,50 @@ void create_route_map();
  * @param stopId The stop ID to query.
  * @param info Pointer to a RouteInfo array that will be filled with the results.
  * @param length Number of trips to fetch.
- * @param filterRouteName (Optional) If provided, only trips matching this route name will be included.
  * 
  */
-void get_stop_info(int stopId, RouteInfo* info, int length, int filterRouteName=-1);
+void get_stop_info(int stopId, RouteInfo* info, int length);
+
+/**
+ * @brief Fetch stop info for a specific stop and populate the provided RouteInfo array.
+ * 
+ * @param stopId The stop ID to query.
+ * @param info Pointer to a RouteInfo array that will be filled with the results.
+ * @param length Number of trips to fetch.
+ * @param routeId Only trips matching this route id will be included.
+ * @param direction If false, fetch trips in the forward direction; if true, fetch in the reverse direction.
+ * 
+ *  396 - 3 - Cortesano Gardolo P.Dante Villazzano 3
+    400 - 5 - Piazza Dante P.Fiera Povo Oltrecastello
+    402 - 7 - Canova Melta Piazza Dante Gocciadoro
+    404 - 8 - Centochiavi Piazza Dante Mattarello
+    406 - 9 - P.Dante S.Donà Cognola Villamontagna
+    408 - 10 - P.Dante Martignano Cognola / Montevaccino
+    425 - 11 - Dogana Ftm Via Brennero Gardolo Spini
+    466 - 13 - P.Dante Rosmini S.Rocco Povo Polo Soc.
+    478 - 15 - Dogana Ftm Interporto Spini Di Gardolo
+    484 - 16 - Centochiavi Martignano Cognola Povo
+    533 - C - Rsa "S.Bart." "Angeli Custodi" Laste
+    535 - 5/ - P.Dante P.Fiera Università Mesiano Povo
+    536 - 1 - Ospedale P.Dante Sopramonte
+    538 - 2 - Piedic. Stazione Osp.S.Chiara Regione Piedic.
+    539 - 4 - Gardolo Roncafort Stazione V.Deg. Mad.Bianca
+    541 - 6 - Vela P.Dante Villazzano Grotta
+    568 - G - Gardolo Gardolo Di Mezzo E Spini
+    570 - CM - Povo Borino Celva Passo Cimirlo
+    607 - L1 - 01 Lavis Pressano Nave S.Felice Sorni
+    610 - L3 - 03 Lavis Stazione Fs
+    612 - L4 - 04 Lavis Zona Industriale Lavis
+    613 - L2 - 02 Lavis Pressano Masi Sp.131 Sorni
+    614 - A - P.Dante Ospedale Fersina Clarina P.Dante
+    615 - M - Martignano Montevaccino
+    621 - N - Zuffo Via Rosmini Italcementi
+    623 - 19 - Stazione Buc M.Baldo Muse Regione
+    624 - 12 - P.Dante V.Ghiaie Ravina Romagnano
+    626 - 14 - P.Dante Via Sanseverino Belvedere
+    629 - 17 - Dogana Ftm V.Bolzano Lavis Lavs Ftm
+ * 
+ */
+void get_stop_info_filtered(int stopId, RouteInfo* info, int length, int routeId, bool direction);
 
 #endif
