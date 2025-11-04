@@ -3,6 +3,8 @@
 
 #include <Arduino.h>
 #include <time.h>
+#include <tr_api.h>
+#include <weather.h>
 
 // Returns formatted part of the local time
 String time_helper(char c);

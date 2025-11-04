@@ -7,7 +7,19 @@
 #include <weather.h>
 #include <helpers.h>
 
-Weather_5D buf;
+SemaphoreHandle_t weather_mutex;
+Weather_5D buf_5d;
+Weather_24H buf_24h;
+Weather_now buf_now;
+
+SemaphoreHandle_t route_mutex;
+RouteInfo info_SMM[5];
+RouteInfo info_SMM_filtered[5];
+
+// Task declarations
+void the_timekeeper_tsk(void * parameter);
+void api_update_tsk(void * parameter);
+void renderer_tsk(void * parameter);
 
 void setup() {
 
@@ -23,71 +35,72 @@ void setup() {
 
   configTzTime("CET-1CEST-2,M3.5.0/2,M10.5.0/3", "pool.ntp.org");
 
+  weather_mutex = xSemaphoreCreateMutex();
+  route_mutex = xSemaphoreCreateMutex();
+
+  xTaskCreate(the_timekeeper_tsk, "Timekeeper Task", 8192, NULL, 1, NULL);
   
-  
-
-  /*
-  RouteInfo info[5];
-  
-  get_stop_info(407, info, 5);
-
-  for(int i = 0; i < 5; i++) {
-    print_timestamp();
-    Serial.print("Route: ");
-    Serial.print(info[i].shortName);
-    Serial.print(", ");
-    Serial.print(info[i].longName);
-    Serial.print(", Delay: ");
-    Serial.print(info[i].delay);
-    Serial.print(" min, ETA: ");
-    Serial.println(info[i].eta);
-  }
-
-  memset(info, 0, sizeof(info));
-
-  get_stop_info_filtered(407, info, 5, 400, false);
-
-  for(int i = 0; i < 5; i++) {
-    print_timestamp();
-    Serial.print("Route: ");
-    Serial.print(info[i].shortName);
-    Serial.print(", ");
-    Serial.print(info[i].longName);
-    Serial.print(", Delay: ");
-    Serial.print(info[i].delay);
-    Serial.print(" min, ETA: ");
-    Serial.println(info[i].eta);
-  }
-  */
 }
 
+void api_update_tsk(void * parameter){
+  debug_println("API Update Task started");
+  
+  if(false){
+  if(xSemaphoreTake(weather_mutex, portMAX_DELAY)==pdTRUE){
+    get_weather_5d(buf_5d);
+    get_weather_24h(buf_24h);
+    get_current_weather(buf_now);
+    xSemaphoreGive(weather_mutex);
+  }
+  }
+
+  if(xSemaphoreTake(route_mutex, portMAX_DELAY)==pdTRUE){
+    Serial.printf("Free heap before: %u\n", esp_get_free_heap_size());
+    get_stop_info(407, info_SMM, 5);
+    Serial.printf("Free heap after1:  %u\n", esp_get_free_heap_size());
+    get_stop_info_filtered(407, info_SMM_filtered, 5, 400, false);
+    Serial.printf("Free heap after2:  %u\n", esp_get_free_heap_size());
+    xSemaphoreGive(route_mutex);
+  }
+  
+  vTaskDelete(NULL);
+
+}
+
+void renderer_tsk(void * parameter){
+
+  debug_println("Rendering...");
+  //rendering code here
+  vTaskDelete(NULL);
+
+}
+
+void the_timekeeper_tsk(void * parameter){
+
+  struct tm prev_sec;
+  struct tm now;
+  getLocalTime(&prev_sec);
+
+  for(;;){
+    getLocalTime(&now);
+    if(now.tm_sec != prev_sec.tm_sec){
+      prev_sec = now;
+      if(now.tm_sec == 30){
+        xTaskCreate(api_update_tsk, "API Update Task", 12288, NULL, 1, NULL);
+      }
+      else if(now.tm_sec == 0){
+        xTaskCreate(renderer_tsk, "Renderer Task", 8192, NULL, 1, NULL);
+      }
+      debug_println(String("Timekeeper: ")+String(now.tm_hour)+":"+String(now.tm_min)+":"+String(now.tm_sec));
+
+    }
+
+  }
+
+}
 
 void loop() {
-  
 
-  get_weather_5d(buf);
-  print_timestamp();
-  for(int i = 0; i<5; i++){
-    Serial.print(" - ");
-    Serial.print(buf.codes[i]);
-  }
-  Serial.println();
-  for(int i = 0; i<5; i++){
-    Serial.print(" - ");
-    Serial.print(buf.precipitation[i]);
-  }
-  Serial.println();
-  for(int i = 0; i<5; i++){
-    Serial.print(" - ");
-    Serial.print(buf.temp_max[i]);
-  }
-  Serial.println();
-  for(int i = 0; i<5; i++){
-    Serial.print(" - ");
-    Serial.print(buf.temp_min[i]);
-  }
-  Serial.println();
-
-  delay(10000);
+  vTaskDelete(NULL);
 
 }

@@ -38,13 +38,13 @@ void get_weather_5d(Weather_5D &w_ob, bool force_update){
 
     getLocalTime(&now);
 
-    if(w_ob.last_update.tm_sec==-1 || w_ob.last_update.tm_min<now.tm_min-WEATHER_EXP || w_ob.last_update.tm_hour!=now.tm_hour || force_update){
+    if(w_ob.last_update.tm_sec==-1 || w_ob.last_update.tm_min<now.tm_min-WEATHER_EXP_5D || w_ob.last_update.tm_hour!=now.tm_hour || force_update){
 
         debug_println("Updating...");
 
         HTTPClient weatherClient;
 
-        String url = "https://api.open-meteo.com/v1/forecast?latitude=52.52&longitude=13.41&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max&models=best_match&timezone=Europe%2FBerlin";
+        String url = "https://api.open-meteo.com/v1/forecast?latitude=46.0674&longitude=11.1267&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max&models=best_match&timezone=Europe%2FBerlin";
 
         weatherClient.begin(url);
         int httpCode = weatherClient.GET();
@@ -83,6 +83,119 @@ void get_weather_5d(Weather_5D &w_ob, bool force_update){
                     w_ob.precipitation[inx++] = v.as<short>();
                     if(inx==5)break;
                 }
+
+            } else {
+            Serial.println("Failed to parse routes JSON");
+            debug_println(payload);
+            }
+        } else {
+            Serial.printf("Failed to fetch weather, HTTP code: %d\n", httpCode);
+        }
+        weatherClient.end();
+    }
+    else{
+        debug_println(String("Using cache"));
+    }
+
+}
+
+void get_weather_24h(Weather_24H &w_ob, bool force_update){
+
+    struct tm now;
+
+    getLocalTime(&now);
+
+    if(w_ob.last_update.tm_sec==-1 || w_ob.last_update.tm_min<now.tm_min-WEATHER_EXP_24H || w_ob.last_update.tm_hour!=now.tm_hour || force_update){
+
+        debug_println("Updating...");
+
+        HTTPClient weatherClient;
+
+        String url = "https://api.open-meteo.com/v1/forecast?latitude=46.0674&longitude=11.1267&daily=temperature_2m_max,temperature_2m_min,weather_code&hourly=temperature_2m,precipitation_probability&models=best_match&timezone=Europe%2FBerlin&forecast_days=1";
+
+        weatherClient.begin(url);
+        int httpCode = weatherClient.GET();
+        debug_println(String("Code: ")+String(httpCode));
+        if (httpCode == 200) {
+            
+            String payload = weatherClient.getString();
+            //Serial.println(payload);
+            JsonDocument doc;
+            
+            if (!deserializeJson(doc, payload)) {
+            
+                JsonObject root = doc.as<JsonObject>();
+
+                JsonObject daily = root["daily"];
+
+                getLocalTime(&w_ob.last_update);
+
+                w_ob.code = daily["weather_code"][0].as<short>();
+                w_ob.temp_max = daily["temperature_2m_max"][0].as<float>();
+                w_ob.temp_min = daily["temperature_2m_min"][0].as<float>();
+                int inx = 0;
+                JsonObject hourly = root["hourly"];
+                for (JsonVariant v : hourly["precipitation_probability"].as<JsonArray>()) {
+                    w_ob.precipitation[inx++] = v.as<short>();
+                    if(inx==24)break;
+                }
+                inx = 0;
+                for (JsonVariant v : hourly["temperature_2m"].as<JsonArray>()) {
+                    w_ob.temperature[inx++] = v.as<float>();
+                    if(inx==24)break;
+                }
+
+            } else {
+            Serial.println("Failed to parse routes JSON");
+            debug_println(payload);
+            }
+        } else {
+            Serial.printf("Failed to fetch weather, HTTP code: %d\n", httpCode);
+        }
+        weatherClient.end();
+    }
+    else{
+        debug_println(String("Using cache"));
+    }
+
+}
+
+void get_current_weather(Weather_now &w_ob, bool force_update){
+
+    struct tm now;
+
+    getLocalTime(&now);
+
+    if(w_ob.last_update.tm_sec==-1 || w_ob.last_update.tm_min<now.tm_min-WEATHER_EXP_NOW || w_ob.last_update.tm_hour!=now.tm_hour || force_update){
+
+        debug_println("Updating...");
+
+        HTTPClient weatherClient;
+
+        String url = "https://api.open-meteo.com/v1/forecast?latitude=46.0674&longitude=11.1267&models=best_match&current=temperature_2m,relative_humidity_2m,precipitation,weather_code,wind_speed_10m&timezone=Europe%2FBerlin&forecast_days=1";
+
+        weatherClient.begin(url);
+        int httpCode = weatherClient.GET();
+        debug_println(String("Code: ")+String(httpCode));
+        if (httpCode == 200) {
+            
+            String payload = weatherClient.getString();
+            //Serial.println(payload);
+            JsonDocument doc;
+            
+            if (!deserializeJson(doc, payload)) {
+            
+                JsonObject root = doc.as<JsonObject>();
+
+                JsonObject current = root["current"];
+
+                getLocalTime(&w_ob.last_update);
+
+                w_ob.code = current["weather_code"].as<short>();
+                w_ob.temp = current["temperature_2m"].as<float>();
+                w_ob.humidity = current["relative_humidity_2m"].as<float>();
+                w_ob.precipitation_probability = current["precipitation"].as<short>();
+                w_ob.windspeed = current["wind_speed_10m"].as<float>();
 
             } else {
             Serial.println("Failed to parse routes JSON");

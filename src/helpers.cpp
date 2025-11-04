@@ -36,3 +36,82 @@ void debug_print(const String& message) {
         Serial.print(message);
     }
 }
+
+void debug_print_routes(const RouteInfo* routes, int count) {
+    if (enable_debug) {
+        for(int i = 0; i < 5; i++) {
+            print_timestamp();
+            Serial.print("Route: ");
+            Serial.print(routes[i].shortName);
+            Serial.print(", ");
+            Serial.print(routes[i].longName);
+            Serial.print(", Delay: ");
+            Serial.print(routes[i].delay);
+            Serial.print(" min, ETA: ");
+            Serial.println(routes[i].eta);
+        }
+    }
+}
+
+void debug_print_weather_5d(const Weather_5D& weather) {
+    if (enable_debug) {
+        print_timestamp();
+        Serial.println("5-Day Weather Forecast:");
+        for (int i = 0; i < 5; i++) {
+            Serial.print("Day ");
+            Serial.print(i + 1);
+            Serial.print(": Code=");
+            Serial.print(weather.codes[i]);
+            Serial.print(", Temp Min=");
+            Serial.print(weather.temp_min[i]);
+            Serial.print(", Temp Max=");
+            Serial.print(weather.temp_max[i]);
+            Serial.print(", Precipitation Probability=");
+            Serial.println(weather.precipitation[i]);
+        }
+    }
+}
+
+void debug_print_weather_24h(const Weather_24H& weather) {
+    if (enable_debug) {
+        print_timestamp();
+        Serial.println("24-Hour Weather Forecast:");
+        Serial.print("Code=");
+        Serial.print(weather.code);
+        Serial.print(", Temp Min=");
+        Serial.print(weather.temp_min);
+        Serial.print(", Temp Max=");
+        Serial.println(weather.temp_max);
+        Serial.println("Hourly Precipitation Probability:");
+        for (int i = 0; i < 24; i++) {
+            Serial.print("Hour ");
+            Serial.print(i);
+            Serial.print(": ");
+            Serial.println(weather.precipitation[i]);
+        }
+        Serial.println("Hourly Temperature:");
+        for (int i = 0; i < 24; i++) {
+            Serial.print("Hour ");
+            Serial.print(i);
+            Serial.print(": ");
+            Serial.println(weather.temperature[i]);
+        }
+    }
+}
+
+void debug_print_weather_now(const Weather_now& weather) {
+    if (enable_debug) {
+        print_timestamp();
+        Serial.println("Current Weather:");
+        Serial.print("Code=");
+        Serial.print(weather.code);
+        Serial.print(", Temp=");
+        Serial.print(weather.temp);
+        Serial.print(", Windspeed=");
+        Serial.print(weather.windspeed);
+        Serial.print(", Precipitation Probability=");
+        Serial.print(weather.precipitation_probability);
+        Serial.print(", Humidity=");
+        Serial.println(weather.humidity);
+    }
+}

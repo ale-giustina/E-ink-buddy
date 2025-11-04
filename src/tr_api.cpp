@@ -56,15 +56,14 @@ void get_stop_info(int stopId, RouteInfo *info, int length){
   int httpCode = stopClient.GET();
   
   if (httpCode == 200) {
-
     Serial.print("Fetching trips for stop ");
     Serial.println(stopId);
     String payload = stopClient.getString();
-    //debug_println(payload);
+
     JsonDocument doc;
-    
-    if (!deserializeJson(doc, payload)) {
-      
+    DeserializationError error = deserializeJson(doc, payload);
+    if (!error) {
+
       JsonArray arr = doc.as<JsonArray>();
       for (JsonObject elem : arr) {
 
@@ -109,7 +108,7 @@ void get_stop_info(int stopId, RouteInfo *info, int length){
       }
     } else {
       Serial.println("Failed to parse routes JSON");
-      debug_println(payload);
+      Serial.println(error.c_str());
     }
   } else {
     Serial.printf("Failed to fetch routes, HTTP code: %d\n", httpCode);
@@ -120,7 +119,6 @@ void get_stop_info(int stopId, RouteInfo *info, int length){
 void get_stop_info_filtered(int stopId, RouteInfo *info, int length, int routeId, bool direction){
 
   HTTPClient stopClient;
-
   String url = String(TT_BASE_URL) + String("/trips_new?routeId=") + String(routeId) + String("&type=U&limit=") + String(length) + String("&directionId=") + String(direction ? "1" : "0");
   
   stopClient.begin(url);
@@ -128,15 +126,14 @@ void get_stop_info_filtered(int stopId, RouteInfo *info, int length, int routeId
   int httpCode = stopClient.GET();
   
   if (httpCode == 200) {
-
-    Serial.print("Fetching trips for stop ");
+    Serial.print("Fetching filtered trips for stop ");
     Serial.println(stopId);
     String payload = stopClient.getString();
-    //debug_println(payload);
+
     JsonDocument doc;
-    
-    if (!deserializeJson(doc, payload)) {
-      
+    DeserializationError error = deserializeJson(doc, payload);
+    if (!error) {
+
       JsonArray arr = doc.as<JsonArray>();
       for (JsonObject elem : arr) {
         
@@ -183,7 +180,7 @@ void get_stop_info_filtered(int stopId, RouteInfo *info, int length, int routeId
       }
     } else {
       Serial.println("Failed to parse routes JSON");
-      debug_println(payload);
+      Serial.println(error.c_str());
     }
   } else {
     Serial.printf("Failed to fetch routes, HTTP code: %d\n", httpCode);
