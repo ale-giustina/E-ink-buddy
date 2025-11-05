@@ -147,7 +147,7 @@ void get_stop_info_filtered(int stopId, RouteInfo *info, int length, int routeId
   while(retries < MAX_RETRIES){
 
     HTTPClient stopClient;
-    String url = String(TT_BASE_URL) + String("/trips_new?routeId=") + String(routeId) + String("&type=U&limit=") + String(length) + String("&directionId=") + String(direction ? "1" : "0");
+    String url = String(TT_BASE_URL) + String("/trips_new?routeId=") + String(routeId) + String("&type=U&limit=") + String(length / 2) + String("&directionId=") + String(direction ? "1" : "0");
     
     stopClient.begin(url);
     stopClient.setAuthorization(TT_USER, TT_PASS);
@@ -156,6 +156,8 @@ void get_stop_info_filtered(int stopId, RouteInfo *info, int length, int routeId
     if (httpCode == 200) {
       Serial.print("Fetching filtered trips for stop ");
       Serial.println(stopId);
+      //String payload = stopClient.getString();
+
       String payload = stopClient.getString();
 
       JsonDocument doc;
@@ -237,3 +239,59 @@ void get_stop_info_filtered(int stopId, RouteInfo *info, int length, int routeId
     }
   }
 }
+
+
+/*
+Deprecated stream based approach
+void get_stop_info_filtered(int stopId, RouteInfo *info, int length, int routeId, bool direction){
+  int retries = 0;
+  while(retries < MAX_RETRIES){
+
+    HTTPClient stopClient;
+    String url = String(TT_BASE_URL) + String("/trips_new?routeId=") + String(routeId) + String("&type=U&limit=") + String(length) + String("&directionId=") + String(direction ? "1" : "0");
+    
+    stopClient.begin(url);
+    stopClient.setAuthorization(TT_USER, TT_PASS);
+    int httpCode = stopClient.GET();
+    
+    if (httpCode == 200) {
+      Serial.print("Fetching filtered trips for stop ");
+      Serial.println(stopId);
+
+      WiFiClient& stream = stopClient.getStream();
+
+      while (stream.available()) {
+        char buf[64];
+        stream.readBytesUntil(':', buf, sizeof(buf));
+        buf[sizeof(buf) - 1] = '\0';  // Ensure null-termination
+        if(strstr(buf, "stopId") != NULL){
+          memset(buf, 0, sizeof(buf));
+          stream.readBytesUntil(',', buf, (size_t)20);
+          buf[sizeof(buf) - 1] = '\0';  // Ensure null-termination
+          if(atoi(buf)==stopId){
+            Serial.print("Found stopId field: ");
+            Serial.println(buf);
+            memset(buf, 0, sizeof(buf));
+            stream.readBytesUntil(',', buf, (size_t)20);
+            buf[sizeof(buf) - 1] = '\0';  // Ensure null-termination
+            Serial.print("Reading arrivalTime: ");
+            Serial.println(buf);
+          }
+        }
+      }
+      break;
+    }
+    else {
+      Serial.printf("Failed to fetch routes, HTTP code: %d\n", httpCode);
+    }
+    stopClient.end();
+    retries++;
+    if(retries >= MAX_RETRIES){
+      Serial.println("Max retries reached for get_stop_info_filtered");
+    }
+    else{
+      Serial.println("Retrying get_stop_info_filtered...");
+    }
+  }
+}
+*/

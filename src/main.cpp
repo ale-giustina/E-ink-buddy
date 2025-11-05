@@ -15,7 +15,7 @@ Weather_24H buf_24h;
 Weather_now buf_now;
 
 SemaphoreHandle_t route_mutex;
-#define MAX_ROUTES 7
+#define MAX_ROUTES 10
 RouteInfo info_SMM[MAX_ROUTES];
 RouteInfo info_SMM_filtered[MAX_ROUTES];
 
@@ -50,33 +50,35 @@ void setup() {
 void api_update_tsk(void * parameter){
   
   debug_println("API Update Task started");
-  
+
   if(xSemaphoreTake(weather_mutex, portMAX_DELAY)==pdTRUE){
     get_weather_5d(buf_5d);
     get_weather_24h(buf_24h);
     get_current_weather(buf_now);
     xSemaphoreGive(weather_mutex);
   }
-
+  
   debug_println("Done weather, fetching route info...");
-
+  
   if(xSemaphoreTake(route_mutex, portMAX_DELAY)==pdTRUE){
     get_stop_info(407, info_SMM, MAX_ROUTES);
     get_stop_info_filtered(407, info_SMM_filtered, MAX_ROUTES, 400, false);
     xSemaphoreGive(route_mutex);
   }
-
+  
   debug_println("==========================");
   debug_print_routes(info_SMM, MAX_ROUTES);
   debug_println("==========================");
   debug_print_routes(info_SMM_filtered, MAX_ROUTES);
   debug_println("==========================");
+
   debug_print_weather_5d(buf_5d);
   debug_println("==========================");
   debug_print_weather_24h(buf_24h);
   debug_println("==========================");
   debug_print_weather_now(buf_now);
   debug_println("==========================");
+  
  
   vTaskDelete(NULL);
 
@@ -136,6 +138,11 @@ void the_timekeeper_tsk(void * parameter){
 
   for(;;){
     getLocalTime(&now);
+
+    if(now.tm_sec > prev_sec.tm_sec+4 && now.tm_min == prev_sec.tm_min && now.tm_hour == prev_sec.tm_hour){
+      ESP.restart();
+    }
+
     if(now.tm_sec != prev_sec.tm_sec){
       prev_sec = now;
       if(now.tm_sec == 30){
