@@ -20,6 +20,7 @@ RouteInfo info_SMM_filtered[5];
 void the_timekeeper_tsk(void * parameter);
 void api_update_tsk(void * parameter);
 void renderer_tsk(void * parameter);
+void check_wifi_connection(void * parameter);
 
 void setup() {
 
@@ -79,7 +80,7 @@ void api_update_tsk(void * parameter){
 
 void renderer_tsk(void * parameter){
 
-  Serial.println("Rendering...");
+  Serial.print("Rendering... ");
   Serial.printf("Free heap:  %u\n", esp_get_free_heap_size());
   //rendering code here
   vTaskDelete(NULL);
@@ -102,6 +103,9 @@ void the_timekeeper_tsk(void * parameter){
       else if(now.tm_sec == 0){
         xTaskCreate(renderer_tsk, "Renderer Task", 8192, NULL, 1, NULL);
       }
+      else if(now.tm_sec == 15){
+        xTaskCreate(check_wifi_connection, "WiFi Check Task", 4096, NULL, 1, NULL);
+      }
       Serial.println(String("Timekeeper: ")+String(now.tm_hour)+":"+String(now.tm_min)+":"+String(now.tm_sec));
 
     }
@@ -109,7 +113,29 @@ void the_timekeeper_tsk(void * parameter){
   }
 
 }
-
+void check_wifi_connection(void * parameter){
+  if(!is_connected()){
+    Serial.println("WiFi disconnected, attempting reconnection...");
+    WiFi.disconnect();
+    WiFi.reconnect();
+    unsigned long startAttemptTime = millis();
+    // Wait for connection for 10 seconds
+    while (WiFi.status() != WL_CONNECTED && millis() - startAttemptTime < 10000) {
+      delay(500);
+      Serial.print(".");
+    }
+    if(WiFi.status() == WL_CONNECTED){
+      Serial.println("Reconnected to WiFi");
+    }
+    else{
+      Serial.println("Failed to reconnect to WiFi");
+    }
+  }
+  else{
+    debug_println("Wifi is fine");
+  }
+  vTaskDelete(NULL);
+}
 void loop() {
 
   vTaskDelete(NULL);

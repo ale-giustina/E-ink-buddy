@@ -66,4 +66,11 @@ void debug_print_weather_24h(const Weather_24H& weather);
 **/
 void debug_print_weather_now(const Weather_now& weather);
 
+/**
+ * @brief Check if the device is connected to the internet.
+ * 
+ * @return true if connected, false otherwise.
+ */
+bool is_connected();
+
 #endif // UTILS_H

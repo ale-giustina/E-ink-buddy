@@ -113,3 +113,14 @@ void debug_print_weather_now(const Weather_now& weather) {
         Serial.println(weather.humidity);
     }
 }
+
+bool is_connected() {
+  if (WiFi.status() != WL_CONNECTED) return false;
+  
+  HTTPClient http;
+  http.begin("http://clients3.google.com/generate_204"); // lightweight test
+  int httpCode = http.GET();
+  http.end();
+
+  return (httpCode == 204);
+}

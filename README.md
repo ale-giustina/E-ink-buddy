@@ -8,7 +8,7 @@
 - [X] 24 weather Hours display
 - [ ] Temperature and precipitation graph (?)
 - [X] Create timing module to sync every X minutes over NTP
-- [ ] Resilient wifi error handler
+- [X] Resilient wifi error handler
 - [X] Create task manager to call respective processes to enable everything to run on time
 - [X] BUG: find cause of json incomplete inputs (may be linked)
 - [ ] Create renderer module to manage the E-ink display
