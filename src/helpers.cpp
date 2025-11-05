@@ -39,7 +39,7 @@ void debug_print(const String& message) {
 
 void debug_print_routes(const RouteInfo* routes, int count) {
     if (enable_debug) {
-        for(int i = 0; i < 5; i++) {
+        for(int i = 0; i < count; i++) {
             print_timestamp();
             Serial.print("Route: ");
             Serial.print(routes[i].shortName);
@@ -123,4 +123,22 @@ bool is_connected() {
   http.end();
 
   return (httpCode == 204);
+}
+
+bool is_DST(int year, int month, int day, int hour) {
+  // DST: from last Sunday in March 2:00 → last Sunday in October 3:00
+  if (month < 3 || month > 10) return false;
+  if (month > 3 && month < 10) return true;
+
+  int lastSunday;
+  if (month == 3) {
+    // Find last Sunday in March
+    lastSunday = 31 - ((5 * year / 4 + 4) % 7);
+    return (day > lastSunday || (day == lastSunday && hour >= 2));
+  } else if (month == 10) {
+    // Find last Sunday in October
+    lastSunday = 31 - ((5 * year / 4 + 1) % 7);
+    return !(day > lastSunday || (day == lastSunday && hour >= 3));
+  }
+  return false;
 }

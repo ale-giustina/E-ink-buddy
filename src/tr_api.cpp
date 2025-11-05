@@ -5,6 +5,8 @@ std::map<int, std::array<String, 2>> routeMap;
 
 void create_route_map(){
 
+  //TODO: make this resilient to failed requests
+
   HTTPClient routeClient;
   String url = String(TT_BASE_URL) + "/routes?areas=23";
   routeClient.begin(url);
@@ -92,6 +94,17 @@ void get_stop_info(int stopId, RouteInfo *info, int length){
                 recording = true;
               } else if (c == ':') {
                 if(colonIndex == 1) break;
+                else{
+                  int hours = arrivalTime.toInt();
+                  struct tm timeinfo;
+                  getLocalTime(&timeinfo);
+                  if(!is_DST(timeinfo.tm_year + 1900, timeinfo.tm_mon + 1, timeinfo.tm_mday, timeinfo.tm_hour)){
+                    debug_print("!DST - ");
+                    hours += 1;
+                    if(hours >= 24) hours -= 24;
+                  }
+                  arrivalTime = hours < 10 ? "0" + String(hours) : String(hours);
+                }
                 colonIndex++;
                 arrivalTime += c;
               } else if (recording) {
@@ -174,7 +187,19 @@ void get_stop_info_filtered(int stopId, RouteInfo *info, int length, int routeId
                 int colonIndex = 0;
                 for (char c : stop["arrivalTime"].as<String>()) {
                   if (c == ':') {
-                    if (colonIndex == 1) break;
+                    if (colonIndex == 1) {
+                      break;
+                    } else {
+                      int hours = arrivalTime.toInt();
+                      struct tm timeinfo;
+                      getLocalTime(&timeinfo);
+                      if(!is_DST(timeinfo.tm_year + 1900, timeinfo.tm_mon + 1, timeinfo.tm_mday, timeinfo.tm_hour)){
+                        debug_print("!DST - ");
+                        hours += 1;
+                        if(hours >= 24) hours -= 24;
+                      }
+                      arrivalTime = hours < 10 ? "0" + String(hours) : String(hours);
+                    }
                     colonIndex++;
                     arrivalTime += c;
                   } else if (recording) {

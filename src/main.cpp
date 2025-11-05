@@ -15,8 +15,9 @@ Weather_24H buf_24h;
 Weather_now buf_now;
 
 SemaphoreHandle_t route_mutex;
-RouteInfo info_SMM[5];
-RouteInfo info_SMM_filtered[5];
+#define MAX_ROUTES 7
+RouteInfo info_SMM[MAX_ROUTES];
+RouteInfo info_SMM_filtered[MAX_ROUTES];
 
 // Task declarations
 void the_timekeeper_tsk(void * parameter);
@@ -60,15 +61,15 @@ void api_update_tsk(void * parameter){
   debug_println("Done weather, fetching route info...");
 
   if(xSemaphoreTake(route_mutex, portMAX_DELAY)==pdTRUE){
-    get_stop_info(407, info_SMM, 5);
-    get_stop_info_filtered(407, info_SMM_filtered, 5, 400, false);
+    get_stop_info(407, info_SMM, MAX_ROUTES);
+    get_stop_info_filtered(407, info_SMM_filtered, MAX_ROUTES, 400, false);
     xSemaphoreGive(route_mutex);
   }
 
   debug_println("==========================");
-  debug_print_routes(info_SMM, 5);
+  debug_print_routes(info_SMM, MAX_ROUTES);
   debug_println("==========================");
-  debug_print_routes(info_SMM_filtered, 5);
+  debug_print_routes(info_SMM_filtered, MAX_ROUTES);
   debug_println("==========================");
   debug_print_weather_5d(buf_5d);
   debug_println("==========================");
@@ -119,10 +120,10 @@ void modify_leds(void * parameter){
   int secs = *((int*)parameter);
 
   for(int i = 5; i>=0; i--){
-    Serial.print(secs&0b1);
+    //Serial.print(secs&0b1);
     secs=secs>>1;
   }
-  Serial.println();
+  //Serial.println();
   vTaskDelete(NULL);
 
 }

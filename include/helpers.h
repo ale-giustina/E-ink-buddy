@@ -73,4 +73,15 @@ void debug_print_weather_now(const Weather_now& weather);
  */
 bool is_connected();
 
+/**
+ * @brief Determine if the current date/time is in Daylight Saving Time (DST).
+ * 
+ * @param year The current year.
+ * @param month The current month (1-12).
+ * @param day The current day of the month (1-31).
+ * @param hour The current hour (0-23).
+ * @return true if in DST, false otherwise.
+ */
+bool is_DST(int year, int month, int day, int hour);
+
 #endif // UTILS_H
