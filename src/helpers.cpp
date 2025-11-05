@@ -84,18 +84,16 @@ void debug_print_weather_24h(const Weather_24H& weather) {
         Serial.println(weather.temp_max);
         Serial.println("Hourly Precipitation Probability:");
         for (int i = 0; i < 24; i++) {
-            Serial.print("Hour ");
-            Serial.print(i);
-            Serial.print(": ");
-            Serial.println(weather.precipitation[i]);
+            Serial.print(weather.precipitation[i]);
+            Serial.print("% - ");
         }
+        Serial.println();
         Serial.println("Hourly Temperature:");
         for (int i = 0; i < 24; i++) {
-            Serial.print("Hour ");
-            Serial.print(i);
-            Serial.print(": ");
-            Serial.println(weather.temperature[i]);
+            Serial.print(weather.temperature[i]);
+            Serial.print("C° - ");
         }
+        Serial.println();
     }
 }
 

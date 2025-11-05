@@ -42,13 +42,13 @@ struct Weather_now {
 };
 
 //the expiration time in minutes of the 5D weather packet
-#define WEATHER_EXP_5D 10
+#define WEATHER_EXP_5D (20)
 
 //the expiration time in minutes of the 24H weather packet
-#define WEATHER_EXP_24H 1
+#define WEATHER_EXP_24H (10)
 
 //the expiration time in minutes of the current weather packet
-#define WEATHER_EXP_NOW 1
+#define WEATHER_EXP_NOW (5)
 
 /**
 *

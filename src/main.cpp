@@ -43,33 +43,44 @@ void setup() {
 }
 
 void api_update_tsk(void * parameter){
+  
   debug_println("API Update Task started");
   
-  if(false){
   if(xSemaphoreTake(weather_mutex, portMAX_DELAY)==pdTRUE){
     get_weather_5d(buf_5d);
     get_weather_24h(buf_24h);
     get_current_weather(buf_now);
     xSemaphoreGive(weather_mutex);
   }
-  }
+
+  debug_println("Done weather, fetching route info...");
 
   if(xSemaphoreTake(route_mutex, portMAX_DELAY)==pdTRUE){
-    Serial.printf("Free heap before: %u\n", esp_get_free_heap_size());
     get_stop_info(407, info_SMM, 5);
-    Serial.printf("Free heap after1:  %u\n", esp_get_free_heap_size());
     get_stop_info_filtered(407, info_SMM_filtered, 5, 400, false);
-    Serial.printf("Free heap after2:  %u\n", esp_get_free_heap_size());
     xSemaphoreGive(route_mutex);
   }
-  
+
+  debug_println("==========================");
+  debug_print_routes(info_SMM, 5);
+  debug_println("==========================");
+  debug_print_routes(info_SMM_filtered, 5);
+  debug_println("==========================");
+  debug_print_weather_5d(buf_5d);
+  debug_println("==========================");
+  debug_print_weather_24h(buf_24h);
+  debug_println("==========================");
+  debug_print_weather_now(buf_now);
+  debug_println("==========================");
+ 
   vTaskDelete(NULL);
 
 }
 
 void renderer_tsk(void * parameter){
 
-  debug_println("Rendering...");
+  Serial.println("Rendering...");
+  Serial.printf("Free heap:  %u\n", esp_get_free_heap_size());
   //rendering code here
   vTaskDelete(NULL);
 
@@ -91,7 +102,7 @@ void the_timekeeper_tsk(void * parameter){
       else if(now.tm_sec == 0){
         xTaskCreate(renderer_tsk, "Renderer Task", 8192, NULL, 1, NULL);
       }
-      debug_println(String("Timekeeper: ")+String(now.tm_hour)+":"+String(now.tm_min)+":"+String(now.tm_sec));
+      Serial.println(String("Timekeeper: ")+String(now.tm_hour)+":"+String(now.tm_min)+":"+String(now.tm_sec));
 
     }
 

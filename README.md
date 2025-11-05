@@ -10,7 +10,7 @@
 - [X] Create timing module to sync every X minutes over NTP
 - [ ] Resilient wifi error handler
 - [X] Create task manager to call respective processes to enable everything to run on time
-- [ ] BUG: find cause of json incomplete inputs (may be linked)
+- [X] BUG: find cause of json incomplete inputs (may be linked)
 - [ ] Create renderer module to manage the E-ink display
 - [ ] Handle buttons and state switching between: weather types, lighting sequences and bus filter modes
 

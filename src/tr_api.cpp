@@ -47,143 +47,168 @@ void create_route_map(){
 
 void get_stop_info(int stopId, RouteInfo *info, int length){
 
-  HTTPClient stopClient;
+  int retries = 0;
+  while(retries < MAX_RETRIES){
+    HTTPClient stopClient;
 
-  String url = String(TT_BASE_URL) + String("/trips_new?stopId=") + String(stopId) + String("&type=U&limit=") + String(length);
-  
-  stopClient.begin(url);
-  stopClient.setAuthorization(TT_USER, TT_PASS);
-  int httpCode = stopClient.GET();
-  
-  if (httpCode == 200) {
-    Serial.print("Fetching trips for stop ");
-    Serial.println(stopId);
-    String payload = stopClient.getString();
+    String url = String(TT_BASE_URL) + String("/trips_new?stopId=") + String(stopId) + String("&type=U&limit=") + String(length);
+    
+    stopClient.begin(url);
+    stopClient.setAuthorization(TT_USER, TT_PASS);
+    int httpCode = stopClient.GET();
+    
+    if (httpCode == 200) {
+      Serial.print("Fetching trips for stop ");
+      Serial.println(stopId);
+      String payload = stopClient.getString();
 
-    JsonDocument doc;
-    DeserializationError error = deserializeJson(doc, payload);
-    if (!error) {
+      JsonDocument doc;
+      DeserializationError error = deserializeJson(doc, payload);
+      if (!error) {
 
-      JsonArray arr = doc.as<JsonArray>();
-      for (JsonObject elem : arr) {
+        JsonArray arr = doc.as<JsonArray>();
+        for (JsonObject elem : arr) {
 
-        debug_print(String(atoi(routeMap[elem["routeId"].as<int>()][0].c_str())));
-        if(length > 0){
-          debug_print(" - ");
-          debug_print(elem["routeId"].as<String>());
-          info->shortName = routeMap[elem["routeId"].as<int>()][0];
-          debug_print(" - ");
-          debug_print(routeMap[elem["routeId"].as<int>()][0]);
-          info->longName = routeMap[elem["routeId"].as<int>()][1];
-          debug_print(" - ");
-          debug_print(routeMap[elem["routeId"].as<int>()][1]);
-          debug_print(" - ");
-          debug_print(elem["delay"].as<String>());
-          info->delay = elem["delay"].as<int>();
-          debug_print(" - ");
-          
-          String arrivalTime = "";
-          int colonIndex = 0;
-          bool recording = false;
-          for (char c : elem["oraArrivoProgrammataAFermataSelezionata"].as<String>()) {
-            if (c == 'T') {
-              recording = true;
-            } else if (c == ':') {
-              if(colonIndex == 1) break;
-              colonIndex++;
-              arrivalTime += c;
-            } else if (recording) {
-              arrivalTime += c;
+          debug_print(String(atoi(routeMap[elem["routeId"].as<int>()][0].c_str())));
+          if(length > 0){
+            debug_print(" - ");
+            debug_print(elem["routeId"].as<String>());
+            info->shortName = routeMap[elem["routeId"].as<int>()][0];
+            debug_print(" - ");
+            debug_print(routeMap[elem["routeId"].as<int>()][0]);
+            info->longName = routeMap[elem["routeId"].as<int>()][1];
+            debug_print(" - ");
+            debug_print(routeMap[elem["routeId"].as<int>()][1]);
+            debug_print(" - ");
+            debug_print(elem["delay"].as<String>());
+            info->delay = elem["delay"].as<int>();
+            debug_print(" - ");
+            
+            String arrivalTime = "";
+            int colonIndex = 0;
+            bool recording = false;
+            for (char c : elem["oraArrivoProgrammataAFermataSelezionata"].as<String>()) {
+              if (c == 'T') {
+                recording = true;
+              } else if (c == ':') {
+                if(colonIndex == 1) break;
+                colonIndex++;
+                arrivalTime += c;
+              } else if (recording) {
+                arrivalTime += c;
+              }
             }
+
+            debug_println(arrivalTime);
+            info->eta = arrivalTime;
+            
+            info++;
+
+            length--;
+
           }
-
-          debug_println(arrivalTime);
-          info->eta = arrivalTime;
-          
-          info++;
-
-          length--;
-
         }
+        debug_println("Stop info fetch successful.");
+        break; // Exit the retry loop on success
+      } else {
+        Serial.print("Failed to parse routes JSON: ");
+        Serial.println(error.c_str());
       }
     } else {
-      Serial.println("Failed to parse routes JSON");
-      Serial.println(error.c_str());
+      Serial.printf("Failed to fetch routes, HTTP code: %d\n", httpCode);
     }
-  } else {
-    Serial.printf("Failed to fetch routes, HTTP code: %d\n", httpCode);
+    stopClient.end();
+    retries++;
+    if(retries >= MAX_RETRIES){
+      Serial.println("Max retries reached for get_stop_info");
+    }
+    else{
+      Serial.println("Retrying get_stop_info...");
+    }
+  
   }
-  stopClient.end();
 }
 
 void get_stop_info_filtered(int stopId, RouteInfo *info, int length, int routeId, bool direction){
+  int retries = 0;
+  while(retries < MAX_RETRIES){
 
-  HTTPClient stopClient;
-  String url = String(TT_BASE_URL) + String("/trips_new?routeId=") + String(routeId) + String("&type=U&limit=") + String(length) + String("&directionId=") + String(direction ? "1" : "0");
-  
-  stopClient.begin(url);
-  stopClient.setAuthorization(TT_USER, TT_PASS);
-  int httpCode = stopClient.GET();
-  
-  if (httpCode == 200) {
-    Serial.print("Fetching filtered trips for stop ");
-    Serial.println(stopId);
-    String payload = stopClient.getString();
+    HTTPClient stopClient;
+    String url = String(TT_BASE_URL) + String("/trips_new?routeId=") + String(routeId) + String("&type=U&limit=") + String(length) + String("&directionId=") + String(direction ? "1" : "0");
+    
+    stopClient.begin(url);
+    stopClient.setAuthorization(TT_USER, TT_PASS);
+    int httpCode = stopClient.GET();
+    
+    if (httpCode == 200) {
+      Serial.print("Fetching filtered trips for stop ");
+      Serial.println(stopId);
+      String payload = stopClient.getString();
 
-    JsonDocument doc;
-    DeserializationError error = deserializeJson(doc, payload);
-    if (!error) {
+      JsonDocument doc;
+      DeserializationError error = deserializeJson(doc, payload);
+      if (!error) {
 
-      JsonArray arr = doc.as<JsonArray>();
-      for (JsonObject elem : arr) {
-        
-        for (JsonObject stop : elem["stopTimes"].as<JsonArray>()) {
-          if (stop["stopId"].as<int>() == stopId) {
+        JsonArray arr = doc.as<JsonArray>();
+        for (JsonObject elem : arr) {
+          
+          for (JsonObject stop : elem["stopTimes"].as<JsonArray>()) {
+            if (stop["stopId"].as<int>() == stopId) {
 
-            if(length > 0){
-              debug_print(" - ");
-              debug_print(elem["routeId"].as<String>());
-              info->shortName = routeMap[elem["routeId"].as<int>()][0];
-              debug_print(" - ");
-              debug_print(routeMap[elem["routeId"].as<int>()][0]);
-              info->longName = routeMap[elem["routeId"].as<int>()][1];
-              debug_print(" - ");
-              debug_print(routeMap[elem["routeId"].as<int>()][1]);
-              debug_print(" - ");
-              debug_print(elem["delay"].as<String>());
-              info->delay = elem["delay"].as<int>();
-              debug_print(" - ");
+              if(length > 0){
+                debug_print(" - ");
+                debug_print(elem["routeId"].as<String>());
+                info->shortName = routeMap[elem["routeId"].as<int>()][0];
+                debug_print(" - ");
+                debug_print(routeMap[elem["routeId"].as<int>()][0]);
+                info->longName = routeMap[elem["routeId"].as<int>()][1];
+                debug_print(" - ");
+                debug_print(routeMap[elem["routeId"].as<int>()][1]);
+                debug_print(" - ");
+                debug_print(elem["delay"].as<String>());
+                info->delay = elem["delay"].as<int>();
+                debug_print(" - ");
 
-              String arrivalTime = "";
-              bool recording = true;
-              int colonIndex = 0;
-              for (char c : stop["arrivalTime"].as<String>()) {
-                if (c == ':') {
-                  if (colonIndex == 1) break;
-                  colonIndex++;
-                  arrivalTime += c;
-                } else if (recording) {
-                  arrivalTime += c;
+                String arrivalTime = "";
+                bool recording = true;
+                int colonIndex = 0;
+                for (char c : stop["arrivalTime"].as<String>()) {
+                  if (c == ':') {
+                    if (colonIndex == 1) break;
+                    colonIndex++;
+                    arrivalTime += c;
+                  } else if (recording) {
+                    arrivalTime += c;
+                  }
                 }
+
+                debug_println(arrivalTime);
+                info->eta = arrivalTime;
+                info++;
+                length--;
+
               }
 
-              debug_println(arrivalTime);
-              info->eta = arrivalTime;
-              info++;
-              length--;
-
             }
-
           }
+          
         }
-        
+      } else {
+        Serial.println("Failed to parse routes JSON");
+        Serial.println(error.c_str());
       }
+      debug_println("Filtered stop info fetch successful.");
+      break; // Exit the retry loop on success
     } else {
-      Serial.println("Failed to parse routes JSON");
-      Serial.println(error.c_str());
+      Serial.printf("Failed to fetch routes, HTTP code: %d\n", httpCode);
     }
-  } else {
-    Serial.printf("Failed to fetch routes, HTTP code: %d\n", httpCode);
+    stopClient.end();
+    retries++;
+    if(retries >= MAX_RETRIES){
+      Serial.println("Max retries reached for get_stop_info_filtered");
+    }
+    else{
+      Serial.println("Retrying get_stop_info_filtered...");
+    }
   }
-  stopClient.end();
 }

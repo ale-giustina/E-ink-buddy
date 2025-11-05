@@ -20,6 +20,9 @@ extern bool enable_debug;
 // The map that stores route info (routeId → [shortName, longName])
 extern std::map<int, std::array<String, 2>> routeMap;
 
+// The maximum number of retries for HTTP requests after a failed json parse
+#define MAX_RETRIES 3
+
 /**
  * @brief Fetches all routes from the API and populates routeMap.
  * 
