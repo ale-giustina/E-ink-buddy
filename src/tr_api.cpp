@@ -193,12 +193,12 @@ void get_stop_info_filtered(int stopId, RouteInfo *info, int length, int routeId
           }
           
         }
+        debug_println("Filtered stop info fetch successful.");
+        break; // Exit the retry loop on success
       } else {
         Serial.println("Failed to parse routes JSON");
         Serial.println(error.c_str());
       }
-      debug_println("Filtered stop info fetch successful.");
-      break; // Exit the retry loop on success
     } else {
       Serial.printf("Failed to fetch routes, HTTP code: %d\n", httpCode);
     }

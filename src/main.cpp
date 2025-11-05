@@ -7,6 +7,8 @@
 #include <weather.h>
 #include <helpers.h>
 
+const int led_pins[] = {1,2,3,4,5,6}; //example led pins
+
 SemaphoreHandle_t weather_mutex;
 Weather_5D buf_5d;
 Weather_24H buf_24h;
@@ -21,10 +23,11 @@ void the_timekeeper_tsk(void * parameter);
 void api_update_tsk(void * parameter);
 void renderer_tsk(void * parameter);
 void check_wifi_connection(void * parameter);
+void modify_leds(void * parameter);
 
 void setup() {
 
-  Serial.begin(9600);
+  Serial.begin(115200);
   WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
   while (WiFi.status() != WL_CONNECTED) {
     delay(1000);
@@ -87,32 +90,6 @@ void renderer_tsk(void * parameter){
 
 }
 
-void the_timekeeper_tsk(void * parameter){
-
-  struct tm prev_sec;
-  struct tm now;
-  getLocalTime(&prev_sec);
-
-  for(;;){
-    getLocalTime(&now);
-    if(now.tm_sec != prev_sec.tm_sec){
-      prev_sec = now;
-      if(now.tm_sec == 30){
-        xTaskCreate(api_update_tsk, "API Update Task", 12288, NULL, 1, NULL);
-      }
-      else if(now.tm_sec == 0){
-        xTaskCreate(renderer_tsk, "Renderer Task", 8192, NULL, 1, NULL);
-      }
-      else if(now.tm_sec == 15){
-        xTaskCreate(check_wifi_connection, "WiFi Check Task", 4096, NULL, 1, NULL);
-      }
-      Serial.println(String("Timekeeper: ")+String(now.tm_hour)+":"+String(now.tm_min)+":"+String(now.tm_sec));
-
-    }
-
-  }
-
-}
 void check_wifi_connection(void * parameter){
   if(!is_connected()){
     Serial.println("WiFi disconnected, attempting reconnection...");
@@ -136,6 +113,50 @@ void check_wifi_connection(void * parameter){
   }
   vTaskDelete(NULL);
 }
+
+void modify_leds(void * parameter){
+
+  int secs = *((int*)parameter);
+
+  for(int i = 5; i>=0; i--){
+    Serial.print(secs&0b1);
+    secs=secs>>1;
+  }
+  Serial.println();
+  vTaskDelete(NULL);
+
+}
+
+void the_timekeeper_tsk(void * parameter){
+
+  struct tm prev_sec;
+  struct tm now;
+  getLocalTime(&prev_sec);
+
+  for(;;){
+    getLocalTime(&now);
+    if(now.tm_sec != prev_sec.tm_sec){
+      prev_sec = now;
+      if(now.tm_sec == 30){
+        xTaskCreate(api_update_tsk, "API Update Task", 12288, NULL, 1, NULL);
+      }
+      else if(now.tm_sec == 0){
+        xTaskCreate(renderer_tsk, "Renderer Task", 8192, NULL, 1, NULL);
+      }
+      else if(now.tm_sec == 15){
+        xTaskCreate(check_wifi_connection, "WiFi Check Task", 4096, NULL, 1, NULL);
+      }
+      
+      xTaskCreate(modify_leds, "Update led array", 4096, (void*)&now.tm_sec, 1, NULL);
+
+      Serial.println(String("Timekeeper: ")+String(now.tm_hour)+":"+String(now.tm_min)+":"+String(now.tm_sec));
+
+    }
+
+  }
+
+}
+
 void loop() {
 
   vTaskDelete(NULL);
