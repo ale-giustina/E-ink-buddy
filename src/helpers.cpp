@@ -26,19 +26,19 @@ void print_timestamp() {
 
 bool enable_debug = false;
 
-void debug_println(const String& message) {
-    if (enable_debug) {
+void debug_println(const String& message, bool override_debug) {
+    if (enable_debug || override_debug) {
         Serial.println(message);
     }
 }
-void debug_print(const String& message) {
-    if (enable_debug) {
+void debug_print(const String& message, bool override_debug) {
+    if (enable_debug || override_debug) {
         Serial.print(message);
     }
 }
 
-void debug_print_routes(const RouteInfo* routes, int count) {
-    if (enable_debug) {
+void debug_print_routes(const RouteInfo* routes, int count, bool override_debug) {
+    if (enable_debug || override_debug) {
         for(int i = 0; i < count; i++) {
             print_timestamp();
             Serial.print("Route: ");
@@ -53,8 +53,8 @@ void debug_print_routes(const RouteInfo* routes, int count) {
     }
 }
 
-void debug_print_weather_5d(const Weather_5D& weather) {
-    if (enable_debug) {
+void debug_print_weather_5d(const Weather_5D& weather, bool override_debug) {
+    if (enable_debug || override_debug) {
         print_timestamp();
         Serial.println("5-Day Weather Forecast:");
         for (int i = 0; i < 5; i++) {
@@ -72,8 +72,8 @@ void debug_print_weather_5d(const Weather_5D& weather) {
     }
 }
 
-void debug_print_weather_24h(const Weather_24H& weather) {
-    if (enable_debug) {
+void debug_print_weather_24h(const Weather_24H& weather, bool override_debug) {
+    if (enable_debug || override_debug) {
         print_timestamp();
         Serial.println("24-Hour Weather Forecast:");
         Serial.print("Code=");
@@ -97,8 +97,8 @@ void debug_print_weather_24h(const Weather_24H& weather) {
     }
 }
 
-void debug_print_weather_now(const Weather_now& weather) {
-    if (enable_debug) {
+void debug_print_weather_now(const Weather_now& weather, bool override_debug) {
+    if (enable_debug || override_debug) {
         print_timestamp();
         Serial.println("Current Weather:");
         Serial.print("Code=");

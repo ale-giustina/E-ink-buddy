@@ -3,8 +3,8 @@
 
 std::map<int, std::array<String, 2>> routeMap;
 
-void create_route_map(){
-
+bool create_route_map(){
+  bool success = true;
   //TODO: make this resilient to failed requests
 
   HTTPClient routeClient;
@@ -38,29 +38,48 @@ void create_route_map(){
         }
       }
       Serial.printf("Loaded %d routes\n", (int)routeMap.size());
+      success = true;
     } else {
       Serial.println("Failed to parse routes JSON");
+      success = false;
     }
   } else {
     Serial.printf("Failed to fetch routes, HTTP code: %d\n", httpCode);
+    success = false;
   }
   routeClient.end();
+  return success;
 }
 
-void get_stop_info(int stopId, RouteInfo *info, int length){
-
+void get_stop_info(int stopId, RouteInfo *info, int length, int shift){
+  String queryTime = "";
+  if(shift != -1){
+    struct tm timeinfo;
+    getLocalTime(&timeinfo);
+    time_t rawtime = mktime(&timeinfo);
+    rawtime += shift * 60;
+    if(!is_DST(timeinfo.tm_year + 1900, timeinfo.tm_mon + 1, timeinfo.tm_mday, timeinfo.tm_hour)){
+      rawtime -= 3600;
+    }
+    struct tm * shiftedTime = localtime(&rawtime);
+    char buffer[20];
+    strftime(buffer, sizeof(buffer), "%Y-%m-%dT%H:%M:%S", shiftedTime);
+    queryTime = String(buffer);
+  }
+  
   int retries = 0;
   while(retries < MAX_RETRIES){
     HTTPClient stopClient;
 
     String url = String(TT_BASE_URL) + String("/trips_new?stopId=") + String(stopId) + String("&type=U&limit=") + String(length);
-    
+    if(shift != -1) url += String("&refDateTime=") + String(queryTime);
+    debug_println("Request URL: " + url);
     stopClient.begin(url);
     stopClient.setAuthorization(TT_USER, TT_PASS);
     int httpCode = stopClient.GET();
     
     if (httpCode == 200) {
-      Serial.print("Fetching trips for stop ");
+      Serial.print("Fetching trips for stop: ");
       Serial.println(stopId);
       String payload = stopClient.getString();
 
@@ -124,37 +143,81 @@ void get_stop_info(int stopId, RouteInfo *info, int length){
         debug_println("Stop info fetch successful.");
         break; // Exit the retry loop on success
       } else {
-        Serial.print("Failed to parse routes JSON: ");
-        Serial.println(error.c_str());
+        debug_print("Failed to parse routes JSON: ");
+        debug_println(error.c_str());
       }
     } else {
-      Serial.printf("Failed to fetch routes, HTTP code: %d\n", httpCode);
+      char buffer[20];
+      sprintf(buffer, "Failed to fetch routes, HTTP code: %d\n", httpCode);
+      debug_print(buffer);
+      sprintf(buffer, "URL: %s\n", url.c_str());
+      debug_print(buffer);
     }
     stopClient.end();
     retries++;
     if(retries >= MAX_RETRIES){
-      Serial.println("Max retries reached for get_stop_info");
+      debug_println("Max retries reached for get_stop_info_filtered");
+      return;
     }
     else{
-      Serial.println("Retrying get_stop_info...");
+      debug_println("Retrying get_stop_info...");
     }
   
   }
+  Serial.println("get_stop_info successful");
 }
 
-void get_stop_info_filtered(int stopId, RouteInfo *info, int length, int routeId, bool direction){
+void get_stop_info_filtered(int stopId, RouteInfo *info, int length, int routeId, bool direction, bool autoShift){
   int retries = 0;
+
+  String queryTime = "";
+
+  if(autoShift){
+    get_stop_info_filtered(stopId, info, length, routeId, direction, false);
+    struct tm timeinfo;
+    getLocalTime(&timeinfo);
+    for(int i=0; i<length; i++){
+      
+      int etaMinutes = info[i].eta.substring(3,5).toInt();
+      int etaHours = info[i].eta.substring(0,2).toInt();
+
+      if(((etaMinutes > timeinfo.tm_min && etaHours >= timeinfo.tm_hour) || (etaHours > timeinfo.tm_hour || etaHours > timeinfo.tm_hour+12)) && (i!=0)){
+        queryTime = "";
+        queryTime += String(timeinfo.tm_year + 1900) + "-";
+        queryTime += (timeinfo.tm_mon + 1 < 10 ? "0" : "") + String(timeinfo.tm_mon + 1) + "-";
+        queryTime += (timeinfo.tm_mday < 10 ? "0" : "") + String(timeinfo.tm_mday) + "T";
+        int hours = info[i-1].eta.substring(0,2).toInt();
+        queryTime += (hours < 10 ? "0" : "") + String(hours) + ":";
+        queryTime += (info[i-1].eta.substring(3,5).toInt() < 10 ? "0" : "") + String(info[i-1].eta.substring(3,5).toInt()) + ":";
+        queryTime += String("00") + "Z";
+        debug_println("Auto-shifting query time to: " + queryTime);
+        break;
+      }
+      else if(i==length-1){
+        //If we reach the end without finding a suitable time, set queryTime to now + 1 hour
+        time_t rawtime = mktime(&timeinfo);
+        rawtime += 3600;
+        struct tm * shiftedTime = localtime(&rawtime);
+        char buffer[20];
+        strftime(buffer, sizeof(buffer), "%Y-%m-%dT%H:%M:%S", shiftedTime);
+        queryTime = String(buffer);
+        debug_println("Couldn't find suitable stop\nAuto-shifting query time to: " + queryTime);
+      }
+    }
+
+  }
   while(retries < MAX_RETRIES){
 
     HTTPClient stopClient;
     String url = String(TT_BASE_URL) + String("/trips_new?routeId=") + String(routeId) + String("&type=U&limit=") + String(length / 2) + String("&directionId=") + String(direction ? "1" : "0");
-    
+    if(queryTime != "") url += String("&refDateTime=") + String(queryTime);
+    debug_println("Request URL: " + url);
     stopClient.begin(url);
     stopClient.setAuthorization(TT_USER, TT_PASS);
     int httpCode = stopClient.GET();
     
     if (httpCode == 200) {
-      Serial.print("Fetching filtered trips for stop ");
+      Serial.print("Fetching filtered trips for stop: ");
       Serial.println(stopId);
       //String payload = stopClient.getString();
 
@@ -193,13 +256,6 @@ void get_stop_info_filtered(int stopId, RouteInfo *info, int length, int routeId
                       break;
                     } else {
                       int hours = arrivalTime.toInt();
-                      struct tm timeinfo;
-                      getLocalTime(&timeinfo);
-                      if(!is_DST(timeinfo.tm_year + 1900, timeinfo.tm_mon + 1, timeinfo.tm_mday, timeinfo.tm_hour)){
-                        debug_print("!DST - ");
-                        hours += 1;
-                        if(hours >= 24) hours -= 24;
-                      }
                       arrivalTime = hours < 10 ? "0" + String(hours) : String(hours);
                     }
                     colonIndex++;
@@ -223,21 +279,25 @@ void get_stop_info_filtered(int stopId, RouteInfo *info, int length, int routeId
         debug_println("Filtered stop info fetch successful.");
         break; // Exit the retry loop on success
       } else {
-        Serial.println("Failed to parse routes JSON");
-        Serial.println(error.c_str());
+        debug_print("Failed to parse routes JSON: ");
+        debug_println(error.c_str());
       }
     } else {
-      Serial.printf("Failed to fetch routes, HTTP code: %d\n", httpCode);
+      char buffer[50];
+      sprintf(buffer, "Failed to fetch routes, HTTP code: %d\n", httpCode);
+      debug_print(buffer);
     }
     stopClient.end();
     retries++;
     if(retries >= MAX_RETRIES){
-      Serial.println("Max retries reached for get_stop_info_filtered");
+      debug_println("Max retries reached for get_stop_info_filtered");
+      return;
     }
     else{
-      Serial.println("Retrying get_stop_info_filtered...");
+      debug_println("Retrying get_stop_info_filtered...");
     }
   }
+  if(autoShift) Serial.println("get_stop_info_filtered successful");
 }
 
 

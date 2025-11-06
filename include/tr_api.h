@@ -30,8 +30,10 @@ const int DAYLIGHT_SAVING[] = {3, 10, 31, 3}; //m m d d
  * 
  * This function contacts the Transit API (using TT_BASE_URL, TT_USER, TT_PASS from secrets.h)
  * and fills routeMap with route IDs and their corresponding short/long names.
+ * 
+ * @return true if the route map was successfully created, false otherwise.
  */
-void create_route_map();
+bool create_route_map();
 
 /**
  * @brief Fetch stop info for a specific stop and populate the provided RouteInfo array.
@@ -39,9 +41,10 @@ void create_route_map();
  * @param stopId The stop ID to query.
  * @param info Pointer to a RouteInfo array that will be filled with the results.
  * @param length Number of trips to fetch.
+ * @param shift If not -1, the query time will be shifted by this amount (in minutes, optional).
  * 
  */
-void get_stop_info(int stopId, RouteInfo* info, int length);
+void get_stop_info(int stopId, RouteInfo* info, int length, int shift=-1);
 
 /**
  * @brief Fetch stop info for a specific stop and populate the provided RouteInfo array.
@@ -51,6 +54,7 @@ void get_stop_info(int stopId, RouteInfo* info, int length);
  * @param length Number of trips to fetch.
  * @param routeId Only trips matching this route id will be included.
  * @param direction If false, fetch trips in the forward direction; if true, fetch in the reverse direction.
+ * @param autoShift If true, automatically adjust the query time to fetch upcoming trips only (default: true).
  * 
  *  396 - 3 - Cortesano Gardolo P.Dante Villazzano 3 &<br>
  *  400 - 5 - Piazza Dante P.Fiera Povo Oltrecastello
@@ -83,7 +87,7 @@ void get_stop_info(int stopId, RouteInfo* info, int length);
  *  629 - 17 - Dogana Ftm V.Bolzano Lavis Lavs Ftm
  * 
  */
-void get_stop_info_filtered(int stopId, RouteInfo* info, int length, int routeId, bool direction);
+void get_stop_info_filtered(int stopId, RouteInfo* info, int length, int routeId, bool direction, bool autoShift=true);
 
 
 
