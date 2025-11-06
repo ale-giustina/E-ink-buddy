@@ -16,7 +16,7 @@ Weather_now buf_now;
 
 SemaphoreHandle_t route_mutex;
 //MAX 16
-#define MAX_ROUTES 10
+#define MAX_ROUTES 12
 RouteInfo info_SMM[MAX_ROUTES];
 RouteInfo info_SMM_filtered[MAX_ROUTES];
 
@@ -36,7 +36,7 @@ void setup() {
     Serial.println("Connecting to WiFi...");
   }
   Serial.println("Connected to WiFi");
-  enable_debug = false;
+  enable_debug = true;
   while(!create_route_map()){
     vTaskDelay(1000 / portTICK_PERIOD_MS);
   };
@@ -45,6 +45,8 @@ void setup() {
 
   weather_mutex = xSemaphoreCreateMutex();
   route_mutex = xSemaphoreCreateMutex();
+
+  get_stop_info_filtered(407, info_SMM_filtered, MAX_ROUTES, 400, false, true);
 
   xTaskCreate(the_timekeeper_tsk, "Timekeeper Task", 8192, NULL, 1, NULL);
   
@@ -68,7 +70,7 @@ void api_update_tsk(void * parameter){
   
   if(xSemaphoreTake(route_mutex, portMAX_DELAY)==pdTRUE){
     get_stop_info(407, info_SMM, MAX_ROUTES);
-    get_stop_info_filtered(407, info_SMM_filtered, MAX_ROUTES, 400, false);
+    get_stop_info_filtered(407, info_SMM_filtered, MAX_ROUTES, 400, false, true);
     xSemaphoreGive(route_mutex);
   }
 

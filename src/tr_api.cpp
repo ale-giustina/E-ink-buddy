@@ -3,6 +3,53 @@
 
 std::map<int, std::array<String, 2>> routeMap;
 
+
+static char buffer[BUFFER_SIZE];
+
+void read_stream_to_buffer(HTTPClient &client){
+  WiFiClient& stream = client.getStream();
+      
+  char siz_buf[10];
+  int index_buff = 0;
+  int index_siz = 0;
+  bool isPayload = false;
+  char c;
+
+  while(true){
+
+    while(!stream.available()){
+      vTaskDelay(10 / portTICK_PERIOD_MS);
+    }
+    c = stream.read();
+    if(c == '\r') continue;
+    if(c == EOF) break;
+    if(c == '\n'){
+      isPayload = !isPayload;
+      continue;
+    }
+
+    if(!isPayload){
+      siz_buf[index_siz++] = c;
+      if(siz_buf[0] == '0'){
+        break;
+      }
+    }
+    else{
+      buffer[index_buff++] = c;
+      index_siz = 0;
+    }
+
+
+    if(index_buff >= BUFFER_SIZE-1){
+      debug_println("Buffer overflow in get_stop_info_filtered");
+      break;
+    }
+  };
+  buffer[index_buff] = '\0';
+}
+
+
+
 bool create_route_map(){
   bool success = true;
   //TODO: make this resilient to failed requests
@@ -77,14 +124,14 @@ void get_stop_info(int stopId, RouteInfo *info, int length, int shift){
     stopClient.begin(url);
     stopClient.setAuthorization(TT_USER, TT_PASS);
     int httpCode = stopClient.GET();
-    
     if (httpCode == 200) {
+      
       Serial.print("Fetching trips for stop: ");
       Serial.println(stopId);
-      String payload = stopClient.getString();
+      read_stream_to_buffer(stopClient);
 
       JsonDocument doc;
-      DeserializationError error = deserializeJson(doc, payload);
+      DeserializationError error = deserializeJson(doc, buffer);
       if (!error) {
 
         JsonArray arr = doc.as<JsonArray>();
@@ -141,7 +188,7 @@ void get_stop_info(int stopId, RouteInfo *info, int length, int shift){
           }
         }
         debug_println("Stop info fetch successful.");
-        break; // Exit the retry loop on success
+        break;
       } else {
         debug_print("Failed to parse routes JSON: ");
         debug_println(error.c_str());
@@ -194,9 +241,8 @@ void get_stop_info_filtered(int stopId, RouteInfo *info, int length, int routeId
         break;
       }
       else if(i==length-1){
-        //If we reach the end without finding a suitable time, set queryTime to now + 1 hour
+        //If we reach the end without finding a suitable time, set queryTime to now
         time_t rawtime = mktime(&timeinfo);
-        rawtime += 3600;
         struct tm * shiftedTime = localtime(&rawtime);
         char buffer[20];
         strftime(buffer, sizeof(buffer), "%Y-%m-%dT%H:%M:%S", shiftedTime);
@@ -219,12 +265,11 @@ void get_stop_info_filtered(int stopId, RouteInfo *info, int length, int routeId
     if (httpCode == 200) {
       Serial.print("Fetching filtered trips for stop: ");
       Serial.println(stopId);
-      //String payload = stopClient.getString();
 
-      String payload = stopClient.getString();
+      read_stream_to_buffer(stopClient);
 
       JsonDocument doc;
-      DeserializationError error = deserializeJson(doc, payload);
+      DeserializationError error = deserializeJson(doc, buffer);
       if (!error) {
 
         JsonArray arr = doc.as<JsonArray>();
@@ -281,6 +326,7 @@ void get_stop_info_filtered(int stopId, RouteInfo *info, int length, int routeId
       } else {
         debug_print("Failed to parse routes JSON: ");
         debug_println(error.c_str());
+        Serial.println(buffer);
       }
     } else {
       char buffer[50];
