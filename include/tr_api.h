@@ -23,6 +23,7 @@ extern std::map<int, std::array<String, 2>> routeMap;
 // The maximum number of retries for HTTP requests after a failed json parse
 #define MAX_RETRIES 3
 
+// Size of the buffer used for reading HTTP responses (50000 bytes is enough for lengths<=12)
 #define BUFFER_SIZE 50000
 
 const int DAYLIGHT_SAVING[] = {3, 10, 31, 3}; //m m d d

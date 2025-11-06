@@ -15,7 +15,7 @@ Weather_24H buf_24h;
 Weather_now buf_now;
 
 SemaphoreHandle_t route_mutex;
-//MAX 16
+
 #define MAX_ROUTES 12
 RouteInfo info_SMM[MAX_ROUTES];
 RouteInfo info_SMM_filtered[MAX_ROUTES];
@@ -45,8 +45,6 @@ void setup() {
 
   weather_mutex = xSemaphoreCreateMutex();
   route_mutex = xSemaphoreCreateMutex();
-
-  get_stop_info_filtered(407, info_SMM_filtered, MAX_ROUTES, 400, false, true);
 
   xTaskCreate(the_timekeeper_tsk, "Timekeeper Task", 8192, NULL, 1, NULL);
   
