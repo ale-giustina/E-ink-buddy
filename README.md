@@ -16,5 +16,5 @@
 
 ## Data managing
 All data between modules should be handled as structs or array of structs.
-E.g. the data for busses when the function is called must return an array of structs built as: {short_name, long_name, ETA, delay} (not final, tbd).
+E.g. the data for busses when the function is called must return an array of structs built as: {short_name, long_name, ETA, delay}.
 <br>The modules will be divided each into their own file. 
