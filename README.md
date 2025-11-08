@@ -15,6 +15,10 @@
 - [ ] Handle buttons and state switching between: weather types, lighting sequences and bus filter modes
 
 ## Data managing
-All data between modules should be handled as structs or array of structs.
-E.g. the data for busses when the function is called must return an array of structs built as: {short_name, long_name, ETA, delay}.
-<br>The modules will be divided each into their own file. 
+The main modules are: tr_api and weather_api. They are responsible for fetching and parsing data from the respective APIs. And storing them in a structured way for later use by the renderer module.
+
+### Transport API
+The transport API module fetches real-time bus arrival data from a public transport API. It allows filtering based on specific bus lines and stops. The data is parsed and stored in a structured format for easy access.
+
+### Weather API
+The weather API module fetches weather data from the open-meteo API. It supports multiple display modes, including 24-hour forecasts and 5-day forecasts. The data is parsed and stored in a structured format for easy access.
