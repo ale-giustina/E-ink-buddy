@@ -1,178 +1,146 @@
-#include <Arduino.h>
-#include "secrets.h"
-#include <WiFi.h>
-#include <HTTPClient.h>
-#include <tr_api.h>
 #include <time.h>
-#include <weather.h>
-#include <helpers.h>
+#include <GxEPD2_3C.h>
+#include "secrets.h"
+#include <Fonts/FreeMonoBold24pt7b.h>
+#include <Fonts/FreeMonoBold18pt7b.h>
+#include <Fonts/FreeSans12pt7b.h>
+#include <Fonts/FreeSans18pt7b.h>
+#include <Fonts/FreeSansBold18pt7b.h>
+#include <Fonts/FreeMonoBold24pt7b.h>
+#include <Fonts/FreeMonoBold18pt7b.h>
+#include <Fonts/FreeSans9pt7b.h>
+#include <WiFi.h>
 
-const int led_pins[] = {1,2,3,4,5,6}; //example led pins
+GxEPD2_3C<GxEPD2_750c, GxEPD2_750c::HEIGHT/4> display(GxEPD2_750c(
+    /*CS=*/ 5, /*DC=*/ 14, /*RST=*/ 12, /*BUSY=*/ 25));
 
-SemaphoreHandle_t weather_mutex;
-Weather_5D buf_5d;
-Weather_24H buf_24h;
-Weather_now buf_now;
+#define D_WIDTH GxEPD2_750c::WIDTH
+#define D_HEIGHT GxEPD2_750c::HEIGHT
 
-SemaphoreHandle_t route_mutex;
+void draw_graph(float data[], int len, int x, int y, int w, int h, float min_val, float max_val, uint16_t color, int thickness=3, int x_ticks=5, int y_ticks=5, int x_tick_label_min=0, int x_tick_label_max=10) {
+    if (len < 2) return; // Need at least two points to draw a graph
 
-#define MAX_ROUTES 12
-RouteInfo info_SMM[MAX_ROUTES];
-RouteInfo info_SMM_filtered[MAX_ROUTES];
-
-// Task declarations
-void the_timekeeper_tsk(void * parameter);
-void api_update_tsk(void * parameter);
-void renderer_tsk(void * parameter);
-void check_wifi_connection(void * parameter);
-void modify_leds(void * parameter);
-
-void setup() {
-
-  Serial.begin(115200);
-  WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
-  while (WiFi.status() != WL_CONNECTED) {
-    delay(1000);
-    Serial.println("Connecting to WiFi...");
-  }
-  Serial.println("Connected to WiFi");
-  enable_debug = true;
-  while(!create_route_map()){
-    vTaskDelay(1000 / portTICK_PERIOD_MS);
-  };
-
-  configTzTime("CET-1CEST-2,M3.5.0/2,M10.5.0/3", "pool.ntp.org");
-
-  weather_mutex = xSemaphoreCreateMutex();
-  route_mutex = xSemaphoreCreateMutex();
-
-  xTaskCreate(the_timekeeper_tsk, "Timekeeper Task", 8192, NULL, 1, NULL);
-  
-}
-
-void api_update_tsk(void * parameter){
-  
-  Serial.println("API Update Task started");
-
-  if(xSemaphoreTake(weather_mutex, portMAX_DELAY)==pdTRUE){
-    get_weather_5d(buf_5d);
-    Serial.println("Fetched 5-day weather");
-    get_weather_24h(buf_24h);
-    Serial.println("Fetched 24-hour weather");
-    get_current_weather(buf_now);
-    Serial.println("Fetched current weather");
-    xSemaphoreGive(weather_mutex);
-  }
-  
-  Serial.println("Done weather, fetching route info...");
-  
-  if(xSemaphoreTake(route_mutex, portMAX_DELAY)==pdTRUE){
-    get_stop_info(407, info_SMM, MAX_ROUTES);
-    get_stop_info_filtered(407, info_SMM_filtered, MAX_ROUTES, 400, false, true);
-    xSemaphoreGive(route_mutex);
-  }
-
-  debug_println("==========================", true);
-  debug_print_routes(info_SMM, MAX_ROUTES, true);
-  debug_println("==========================", true);
-  debug_print_routes(info_SMM_filtered, MAX_ROUTES, true);
-  debug_println("==========================", true);
-
-  debug_print_weather_5d(buf_5d, true);
-  debug_println("==========================", true);
-  debug_print_weather_24h(buf_24h, true);
-  debug_println("==========================", true);
-  debug_print_weather_now(buf_now, true);
-  debug_println("==========================", true);
- 
-  vTaskDelete(NULL);
-
-}
-
-void renderer_tsk(void * parameter){
-
-  Serial.print("Rendering... ");
-  Serial.printf("Free heap:  %u\n", esp_get_free_heap_size());
-  //rendering code here
-  vTaskDelete(NULL);
-
-}
-
-void check_wifi_connection(void * parameter){
-  if(!is_connected()){
-    Serial.println("WiFi disconnected, attempting reconnection...");
-    WiFi.disconnect();
-    WiFi.reconnect();
-    unsigned long startAttemptTime = millis();
-    // Wait for connection for 10 seconds
-    while (WiFi.status() != WL_CONNECTED && millis() - startAttemptTime < 10000) {
-      delay(500);
-      Serial.print(".");
+    // Draw axes
+    display.drawRect(x, y, w, h, GxEPD_BLACK);
+    // Draw ticks and labels on x-axis
+    display.setFont(&FreeSans9pt7b);
+    for (int i = 0; i <= x_ticks; i++) {
+        int xt = x + i * (w / x_ticks);
+        display.drawLine(xt, y + h, xt, y + h + 5, GxEPD_BLACK);
+        float label = x_tick_label_min + i * (x_tick_label_max - x_tick_label_min) / x_ticks;
+        display.setCursor(xt - 10, y + h + 20);
+        display.print((int)label, 1);
     }
-    if(WiFi.status() == WL_CONNECTED){
-      Serial.println("Reconnected to WiFi");
+    // Draw ticks and labels on y-axis
+    for (int i = 0; i <= y_ticks; i++) {
+        int yt = y + h - i * (h / y_ticks);
+        display.drawLine(x - 5, yt, x, yt, GxEPD_BLACK);
+        float label = min_val + i * (max_val - min_val) / y_ticks;
+        display.setCursor(x - 40, yt + 5);
+        display.print(label, 1);
     }
-    else{
-      Serial.println("Failed to reconnect to WiFi");
+
+    float x_scale = (float)w / (len - 1);
+    float y_scale = (float)h / (max_val - min_val);
+
+    for (int i = 0; i < len - 1; i++) {
+        int x0 = x + i * x_scale;
+        int y0 = y + h - (data[i] - min_val) * y_scale;
+        int x1 = x + (i + 1) * x_scale;
+        int y1 = y + h - (data[i + 1] - min_val) * y_scale;
+
+
+        display.fillCircle(x0, y0, 2, color);
+        for (int t = 0; t < thickness; t++) {
+            display.drawLine(x0, y0 + t, x1, y1 + t, color);
+        }
     }
-  }
-  else{
-    Serial.println("Wifi is fine");
-  }
-  vTaskDelete(NULL);
+
+}
+struct Weather_now {
+
+    struct tm last_update = {-1};
+    short code;
+    float temp;
+    float windspeed;
+    short precipitation_probability;
+    short humidity;
+    
+};
+void draw_time_strip(int x, int y, int w, int h, struct tm &timeinfo, Weather_now &current_weather) {
+    // Draw time date and current weather info strip
+    char buffer[30];
+    display.setTextColor(GxEPD_DARKGREY);
+    strftime(buffer, sizeof(buffer), "%H:%M", &timeinfo);
+    display.setFont(&FreeMonoBold18pt7b);
+    display.setTextSize(2);
+    display.setCursor(x + 10, y + 50);
+    display.print(buffer);
+    display.setTextSize(1);
+    strftime(buffer, sizeof(buffer), "%a %d %b %Y", &timeinfo);
+    display.setFont(&FreeMonoBold18pt7b);
+    display.setCursor(x + 10, y + 35 + 50);
+    display.print(buffer);
+
+    
+
+    // Display current weather info
+    display.setCursor(x + 10, y + 35 + 40 + 30);
+    display.print(current_weather.temp, 1);
+    display.print("C ");
+    display.print(current_weather.windspeed, 1);
+    display.print("km/h ");
+    display.print(current_weather.precipitation_probability);
+    display.print("% RH:");
+    display.print(current_weather.humidity);
+    display.print("%");
+
 }
 
-void modify_leds(void * parameter){
+void setup(){
+    Serial.begin(115200);
+    WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+    while (WiFi.status() != WL_CONNECTED) {
+        delay(1000);
+        Serial.println("Connecting to WiFi...");
+    }
+    Serial.println("Connected to WiFi");
+    configTzTime("CET-1CEST-2,M3.5.0/2,M10.5.0/3", "pool.ntp.org");
+    delay(2000);
+    Serial.println("GxEPD2 3-Color Display Test");
+    Serial.println(D_HEIGHT);
+    Serial.println(D_WIDTH);
+    display.init();
+    display.setRotation(0); // rotate if needed to fit layout
 
-  int secs = *((int*)parameter);
+    float data[10] = {10.5, 12.0, 11.5, 13.0, 14.5, 13.5, 15.0, 16.0, 15.5, 17.0};
 
-  for(int i = 5; i>=0; i--){
-    //Serial.print(secs&0b1);
-    secs=secs>>1;
-  }
-  //Serial.println();
-  vTaskDelete(NULL);
+    display.setFullWindow();
+    display.firstPage();
 
-}
-
-void the_timekeeper_tsk(void * parameter){
-
-  struct tm prev_sec;
-  struct tm now;
-  getLocalTime(&prev_sec);
-
-  for(;;){
+    struct tm now;
     getLocalTime(&now);
+    Weather_now wea;
+    wea.temp = 20;
+    wea.humidity = 80;
+    wea.precipitation_probability=50;
+    wea.windspeed=3;
 
-    if(now.tm_sec > prev_sec.tm_sec+4 && now.tm_min == prev_sec.tm_min && now.tm_hour == prev_sec.tm_hour){
-      WiFi.disconnect();
-      ESP.restart();
-    }
+    do {
+        display.fillScreen(GxEPD_WHITE);
+        draw_time_strip(0,0,D_WIDTH,110,now,wea);
+        display.drawLine(0, 120, D_WIDTH, 120, GxEPD_RED);
+        draw_graph(data, 10, 60, 130, D_WIDTH - 90, D_HEIGHT - 180, 10.0, 18.0, GxEPD_RED, 3, 10, 4, 0, 9);
+    } while (display.nextPage());
 
-    if(now.tm_sec != prev_sec.tm_sec){
-      prev_sec = now;
-      if(now.tm_sec == 30){
-        xTaskCreate(api_update_tsk, "API Update Task", 12288, NULL, 1, NULL);
-      }
-      else if(now.tm_sec == 0){
-        xTaskCreate(renderer_tsk, "Renderer Task", 8192, NULL, 1, NULL);
-      }
-      else if(now.tm_sec == 15){
-        xTaskCreate(check_wifi_connection, "WiFi Check Task", 4096, NULL, 1, NULL);
-      }
-      
-      xTaskCreate(modify_leds, "Update led array", 4096, (void*)&now.tm_sec, 1, NULL);
 
-      Serial.println(String("Timekeeper: ")+String(now.tm_hour)+":"+String(now.tm_min)+":"+String(now.tm_sec));
 
-    }
 
-  }
+
+
 
 }
 
-void loop() {
-
-  vTaskDelete(NULL);
-
+void loop(){
+    vTaskDelete(NULL);
 }
