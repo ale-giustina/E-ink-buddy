@@ -6,12 +6,15 @@
 - [X] Create weather API module that supports multiple modes of display (24h, 5d, precipitations...) using open-weather
 - [X] 5 Days weather display
 - [X] 24 weather Hours display
-- [ ] Temperature and precipitation graph (?)
+- [X] Temperature and precipitation graph (?)
 - [X] Create timing module to sync every X minutes over NTP
 - [X] Resilient wifi error handler
 - [X] Create task manager to call respective processes to enable everything to run on time
 - [X] BUG: find cause of json incomplete inputs (may be linked)
-- [ ] Create renderer module to manage the E-ink display
+- [X] Create renderer module to manage the E-ink display
+- [ ] Create 5 day forecast drawing
+- [ ] Create bus arrivals drawing
+- [ ] Create 5 day forecast graphs drawing 
 - [ ] Handle buttons and state switching between: weather types, lighting sequences and bus filter modes
 
 ## Data managing
@@ -21,4 +24,6 @@ The main modules are: tr_api and weather_api. They are responsible for fetching 
 The transport API module fetches real-time bus arrival data from a public transport API. It allows filtering based on specific bus lines and stops. The data is parsed and stored in a structured format for easy access.
 
 ### Weather API
-The weather API module fetches weather data from the open-meteo API. It supports multiple display modes, including 24-hour forecasts and 5-day forecasts. The data is parsed and stored in a structured format for easy access.
+The weather API module fetches weather data from the open-meteo API. It supports multiple display modes, including 24-hour forecasts and 5-day forecasts. The data is parsed and stored in a structured format for easy access.4
+
+Bitmaps taken from [weather-icons](https://github.com/erikflowers/weather-icons/tree/master?tab=readme-ov-file)

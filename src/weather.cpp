@@ -111,7 +111,7 @@ void get_weather_24h(Weather_24H &w_ob, bool force_update){
 
         HTTPClient weatherClient;
 
-        String url = "https://api.open-meteo.com/v1/forecast?latitude=46.0674&longitude=11.1267&daily=temperature_2m_max,temperature_2m_min,weather_code&hourly=temperature_2m,precipitation_probability&models=best_match&timezone=Europe%2FBerlin&forecast_days=1";
+        String url = "https://api.open-meteo.com/v1/forecast?latitude=46.0674&longitude=11.1267&daily=temperature_2m_max,temperature_2m_min,weather_code&hourly=temperature_2m,precipitation_probability,relative_humidity_2m,cloud_cover&models=best_match&timezone=Europe%2FBerlin&forecast_days=1";
 
         weatherClient.begin(url);
         int httpCode = weatherClient.GET();
@@ -142,6 +142,16 @@ void get_weather_24h(Weather_24H &w_ob, bool force_update){
                 inx = 0;
                 for (JsonVariant v : hourly["temperature_2m"].as<JsonArray>()) {
                     w_ob.temperature[inx++] = v.as<float>();
+                    if(inx==24)break;
+                }
+                inx = 0;
+                for (JsonVariant v : hourly["relative_humidity_2m"].as<JsonArray>()) {
+                    w_ob.humidity[inx++] = v.as<short>();
+                    if(inx==24)break;
+                }
+                inx = 0;
+                for (JsonVariant v : hourly["cloud_cover"].as<JsonArray>()) {
+                    w_ob.cloudcover[inx++] = v.as<float>();
                     if(inx==24)break;
                 }
 

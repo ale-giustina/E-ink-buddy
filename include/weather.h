@@ -27,6 +27,8 @@ struct Weather_24H {
     float temp_max;
     std::array<short, 24> precipitation;
     std::array<float, 24> temperature;
+    std::array<short, 24> humidity;
+    std::array<float, 24> cloudcover;
     
 };
 
