@@ -20,6 +20,9 @@ void start_graphics();
 
 extern GxEPD2_3C<GxEPD2_750c, GxEPD2_750c::HEIGHT/4> display;
 
+extern const int D_WIDTH;
+extern const int D_HEIGHT;
+
 /**
  * @brief Draws a graph on the display.
  * @tparam T The data type of the values to plot (e.g., float, int).

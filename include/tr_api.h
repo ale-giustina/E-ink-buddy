@@ -24,7 +24,7 @@ extern std::map<int, std::array<String, 2>> routeMap;
 #define MAX_RETRIES 3
 
 // Size of the buffer used for reading HTTP responses (50000 bytes is enough for lengths<=12)
-#define BUFFER_SIZE 50000
+#define BUFFER_SIZE 60000-464
 
 const int DAYLIGHT_SAVING[] = {3, 10, 31, 3}; //m m d d
 

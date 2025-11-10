@@ -9,8 +9,8 @@ void start_graphics() {
     display.setFullWindow();
 }
 
-#define D_WIDTH GxEPD2_750c::WIDTH
-#define D_HEIGHT GxEPD2_750c::HEIGHT
+const int D_WIDTH = GxEPD2_750c::WIDTH;
+const int D_HEIGHT = GxEPD2_750c::HEIGHT;
 
 template<typename T>
 void draw_graph(T data[], int len, int x, int y, int w, int h, float min_val, float max_val, uint16_t color, int thickness, int x_ticks, int y_ticks, int x_tick_label_min, int x_tick_label_max, bool noaxis, int x_cyclic) {
@@ -94,13 +94,13 @@ void draw_time_strip(int x, int y, struct tm &timeinfo, Weather_now &current_wea
     display.print("%");
     display.setCursor(x + 20 + 30*7 , y + 120);
 
-    draw_graph(forecast_24h->temperature.data(), 24, 10 + 380, 7, 240, 80, forecast_24h->temp_min, forecast_24h->temp_max, GxEPD_RED, 2, 6, 2, timeinfo.tm_hour, timeinfo.tm_hour + 23,false, 25);
+    draw_graph(forecast_24h->temperature.data(), 24, 10 + 380, 7, 240, 80, forecast_24h->temp_min, forecast_24h->temp_max, GxEPD_RED, 2, 6, 2, 0, 23,false, 25);
     draw_graph(forecast_24h->precipitation.data(), 24, 10 + 380, 7, 240, 80, 0.0, 100.0, GxEPD_BLACK, 2, 10, 4, 0, 9, true);
 }
 
 void draw_24_h_graphs(Weather_24H &forecast_24h, struct tm &timeinfo) {
 
-    draw_graph(forecast_24h.temperature.data(), 24, 30, 150, D_WIDTH - 60, D_HEIGHT - 180, forecast_24h.temp_min, forecast_24h.temp_max, GxEPD_RED, 3, 6, 2, timeinfo.tm_hour, timeinfo.tm_hour + 23,false, 25);
+    draw_graph(forecast_24h.temperature.data(), 24, 30, 150, D_WIDTH - 60, D_HEIGHT - 180, forecast_24h.temp_min, forecast_24h.temp_max, GxEPD_RED, 3, 9, 2, 0, 23,false, 25);
     draw_graph(forecast_24h.precipitation.data(), 24, 30, 150, D_WIDTH - 60, D_HEIGHT - 180, 0.0, 100.0, GxEPD_BLACK, 3, 10, 4, 0, 23,true);
     draw_graph(forecast_24h.humidity.data(), 24, 30, 150, D_WIDTH - 60, D_HEIGHT - 180, 0.0, 100.0, GxEPD_RED, 3, 10, 4, 0, 23,true);
     draw_graph(forecast_24h.cloudcover.data(), 24, 30, 150, D_WIDTH - 60, D_HEIGHT - 180, 0.0, 100.0, GxEPD_BLACK, 3, 10, 4, 0, 23,true);

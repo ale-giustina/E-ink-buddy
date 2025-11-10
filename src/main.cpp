@@ -36,6 +36,14 @@ void setup() {
 
   m_state = GRAPH_24_H;
 
+  start_graphics();
+  display.setTextSize(3);
+  do{
+    display.fillScreen(GxEPD_BLACK);
+    display.drawBitmap(D_WIDTH/2 - 75, D_HEIGHT/2 - 75, epd_bitmap_allArray[15], 150, 150, GxEPD_WHITE);
+  }while(display.nextPage());
+  display.setTextSize(1);
+
   Serial.begin(115200);
   WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
   while (WiFi.status() != WL_CONNECTED) {
@@ -52,13 +60,16 @@ void setup() {
     pinMode(i, OUTPUT);
   }
 
-  start_graphics();
-
   configTzTime("CET-1CEST-2,M3.5.0/2,M10.5.0/3", "pool.ntp.org");
 
   weather_mutex = xSemaphoreCreateMutex();
   route_mutex = xSemaphoreCreateMutex();
 
+  xTaskCreate(api_update_tsk, "API Update Task", 12288, NULL, 1, NULL);
+
+  vTaskDelay(8000 / portTICK_PERIOD_MS);
+  xTaskCreate(renderer_tsk, "Renderer Task", 8192, NULL, 1, NULL);
+  vTaskDelay(8000 / portTICK_PERIOD_MS);
   xTaskCreate(the_timekeeper_tsk, "Timekeeper Task", 8192, NULL, 1, NULL);
   
 }
@@ -176,10 +187,10 @@ void modify_leds(void * parameter){
   for(int i = 5; i>=0; i--){
     //Serial.print(secs&0b1);
     if(secs&0b1){
-      digitalWrite(led_pins[i], HIGH);
+      analogWrite(led_pins[i], 50);
     }
     else{
-      digitalWrite(led_pins[i], LOW);
+      analogWrite(led_pins[i], 0);
     }
     secs=secs>>1;
   }
