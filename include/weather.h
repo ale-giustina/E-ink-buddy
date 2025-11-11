@@ -27,10 +27,10 @@ struct Weather_24H {
     short code;
     float temp_min;
     float temp_max;
-    std::array<short, 72> precipitation;
-    std::array<float, 72> temperature;
-    std::array<short, 72> humidity;
-    std::array<float, 72> cloudcover;
+    std::array<short, 168> precipitation;
+    std::array<float, 168> temperature;
+    std::array<short, 168> humidity;
+    std::array<float, 168> cloudcover;
     
 };
 

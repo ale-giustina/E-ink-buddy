@@ -9,6 +9,8 @@ void start_graphics() {
     display.setFullWindow();
 }
 
+
+
 const int D_WIDTH = GxEPD2_750c::WIDTH;
 const int D_HEIGHT = GxEPD2_750c::HEIGHT;
 
@@ -112,10 +114,13 @@ void draw_24_h_graphs(Weather_24H &forecast_24h, struct tm timeinfo, int day_off
     strftime(buffer, sizeof(buffer), "%a", &timeinfo);
     display.setCursor(30, 140);
     display.print(buffer);
+    float min_temp = min_element(forecast_24h.temperature.data()+day_offset*24, 24);
+    float max_temp = max_element(forecast_24h.temperature.data()+day_offset*24, 24);
+
     draw_graph(forecast_24h.temperature.data()+day_offset*24, 24, 30, 150, D_WIDTH - 60, D_HEIGHT - 180, forecast_24h.temp_min, forecast_24h.temp_max, GxEPD_RED, 3, 9, 6, 0, 23,false, 25);
     draw_graph(forecast_24h.precipitation.data()+day_offset*24, 24, 30, 150, D_WIDTH - 60, D_HEIGHT - 180, 0.0, 100.0, GxEPD_BLACK, 3, 10, 4, 0, 23,true);
-    draw_graph(forecast_24h.humidity.data()+day_offset*24, 24, 30, 150, D_WIDTH - 60, D_HEIGHT - 180, 0.0, 100.0, GxEPD_RED, 3, 10, 4, 0, 23,true);
-    draw_graph(forecast_24h.cloudcover.data()+day_offset*24, 24, 30, 150, D_WIDTH - 60, D_HEIGHT - 180, 0.0, 100.0, GxEPD_BLACK, 3, 10, 4, 0, 23,true);
+    draw_graph(forecast_24h.humidity.data()+day_offset*24, 24, 30, 150, D_WIDTH - 60, D_HEIGHT - 180, 0.0, 100.0, GxEPD_RED, 1, 10, 4, 0, 23,true);
+    draw_graph(forecast_24h.cloudcover.data()+day_offset*24, 24, 30, 150, D_WIDTH - 60, D_HEIGHT - 180, 0.0, 100.0, GxEPD_BLACK, 1, 10, 4, 0, 23,true);
 }
 
 void draw_5_day_graphs(Weather_5D &forecast_5d, struct tm timeinfo, int day_offset) {
@@ -153,6 +158,46 @@ void draw_bus_arrivals(RouteInfo routes[], int num_routes) {
     // Implement drawing bus arrivals
 }
 
-void draw_5_day_forecast(Weather_5D &forecast_5d, struct tm &timeinfo) {
-    // Implement drawing 5-day forecast
+void draw_5_day_forecast(Weather_5D &forecast_5d, struct tm &timeinfo, int shift_days) {
+    
+    int width_scale = 5;
+
+    int positions[6][2] = {{35, 100},{35+(D_WIDTH-width_scale)/3, 100},{35+2*(D_WIDTH-width_scale)/3, 100},
+                            {35, 135+(D_HEIGHT-180)/2},{35+(D_WIDTH-width_scale)/3, 135+(D_HEIGHT-180)/2},{35+2*(D_WIDTH-width_scale)/3, 135+(D_HEIGHT-180)/2}};
+    
+    for (int i = 0; i < 6; i++) {
+        int code = forecast_5d.codes[i + shift_days];
+        display.drawBitmap(positions[i][0], positions[i][1], epd_bitmap_allArray[weather_codes_to_btm[code]], 150, 150, GxEPD_BLACK);
+    }
+
+    for (int i = 0; i < 6; i++) {
+        display.setFont(&FreeMonoBold9pt7b);
+        display.setTextColor(GxEPD_BLACK);
+        char buffer[10];
+        struct tm temp_time = timeinfo;
+        temp_time.tm_mday += i + shift_days;
+        mktime(&temp_time); // normalize
+        strftime(buffer, sizeof(buffer), "%a", &temp_time);
+        display.setCursor(positions[i][0], positions[i][1]+35);
+        display.print(buffer);
+        display.setCursor(positions[i][0], positions[i][1] + 55);
+        if(forecast_5d.precipitation[i+ shift_days] > 50){
+            display.setTextColor(GxEPD_RED);
+        } else {
+            display.setTextColor(GxEPD_BLACK);
+        }
+        display.print(forecast_5d.precipitation[i + shift_days]);
+        display.print("%");
+        display.setTextColor(GxEPD_BLACK);
+
+        // Print min and max temperatures
+        float min_temp = forecast_5d.temp_min[i + shift_days];
+        float max_temp = forecast_5d.temp_max[i + shift_days];
+        display.setCursor(positions[i][0], positions[i][1] + 145);
+        display.print(min_temp, 1);
+        display.print("C");
+        display.print(" - ");
+        display.print(max_temp, 1);
+        display.print("C");
+    }
 }

@@ -30,6 +30,9 @@ machine_state m_state;
 
 int shift_selector = 0;
 
+volatile bool graphics_update_in_progress = false;
+volatile bool graphics_update_requested = false;
+
 // Task declarations
 void the_timekeeper_tsk(void * parameter);
 void api_update_tsk(void * parameter);
@@ -39,7 +42,7 @@ void modify_leds(void * parameter);
 
 void setup() {
 
-  m_state = GRAPH_5_DAYS;
+  m_state = DAY_FORECAST_5;
 
   start_graphics();
   display.setTextSize(3);
@@ -124,7 +127,8 @@ void api_update_tsk(void * parameter){
 }
 
 void renderer_tsk(void * parameter){
-
+  graphics_update_in_progress = true;
+  graphics_update_requested = false;
   Serial.print("Rendering... ");
   Serial.printf("Free heap:  %u\n", esp_get_free_heap_size());
   display.firstPage();
@@ -144,7 +148,7 @@ void renderer_tsk(void * parameter){
     }
     else if(m_state == DAY_FORECAST_5){
       if(xSemaphoreTake(weather_mutex, portMAX_DELAY)==pdTRUE){
-        draw_5_day_forecast(buf_5d, timeinfo);
+        draw_5_day_forecast(buf_5d, timeinfo, shift_selector);
         xSemaphoreGive(weather_mutex);
       }
     }
@@ -168,6 +172,7 @@ void renderer_tsk(void * parameter){
     }
 
   } while (display.nextPage());
+  graphics_update_in_progress = false;
   vTaskDelete(NULL);
 
 }
@@ -198,16 +203,20 @@ void check_wifi_connection(void * parameter){
 
 bool isChoosingShift = false;
 bool pressedShift = false;
+
+bool isChoosingStates = false;
+bool pressedStates = false;
+
 int wait_second = 0;
 int old_secs = -1;
 bool update_leds = false;
 void modify_leds(void * parameter){
 
-  machine_state working_states[] = {GRAPH_24_H, GRAPH_5_DAYS};
+  machine_state working_states[] = {GRAPH_24_H, GRAPH_5_DAYS, DAY_FORECAST_5};
 
   int secs = *((int*)parameter);
 
-  if(digitalRead(input_pins[0])){
+  if(digitalRead(input_pins[1])){
     isChoosingShift = true;
     if(!pressedShift){
       Serial.println(shift_selector);
@@ -221,8 +230,37 @@ void modify_leds(void * parameter){
   else{
     pressedShift=false;
   }
+
+  if(digitalRead(input_pins[0])){
+    isChoosingStates = true;
+    if(!pressedStates){
+      int current_state_index = 0;
+      for(int i = 0; i<sizeof(working_states)/sizeof(machine_state); i++){
+        if(m_state == working_states[i]){
+          current_state_index = i;
+        }
+      }
+      shift_selector = 0;
+      current_state_index+=1;
+      current_state_index=current_state_index%(sizeof(working_states)/sizeof(machine_state));
+      m_state = working_states[current_state_index];
+      Serial.print("Changed state to ");
+      Serial.println(m_state);
+      update_leds=true;
+
+    }
+    wait_second = (secs+3)%60;
+    pressedStates=true;
+  }
+  else{
+    pressedStates=false;
+  }
+
   if(secs == wait_second){
     isChoosingShift=false;
+    isChoosingStates=false;
+    wait_second = -1;
+    graphics_update_requested = true;
   }
 
   if(isChoosingShift){
@@ -238,12 +276,28 @@ void modify_leds(void * parameter){
       update_leds=false;
     }
   }
+  else if(isChoosingStates){
+    if(update_leds){
+      int state_index = 0;
+      for(int i = 0; i<sizeof(working_states)/sizeof(machine_state); i++){
+        if(m_state == working_states[i]){
+          state_index = i;
+        }
+      }
+      for(int i = 0; i<=5; i++){
+        if(i==state_index){
+          analogWrite(led_pins[i], 100);
+        }
+        else{
+          analogWrite(led_pins[i], 0);
+        }
+      }
+      update_leds=false;
+    }
+  }
   else{
     
     if(secs!=old_secs){
-      Serial.print(secs);
-      Serial.print(" ");
-      Serial.println(old_secs);
       old_secs=secs;
       for(int i = 5; i>=0; i--){
         //Serial.print(secs&0b1);
@@ -280,7 +334,7 @@ void the_timekeeper_tsk(void * parameter){
       if(now.tm_sec == 30){
         xTaskCreate(api_update_tsk, "API Update Task", 12288, NULL, 1, NULL);
       }
-      else if(now.tm_sec == 0){
+      else if((now.tm_sec == 0 || graphics_update_requested) && !graphics_update_in_progress){
         xTaskCreate(renderer_tsk, "Renderer Task", 8192, NULL, 1, NULL);
       }
       else if(now.tm_sec == 15){

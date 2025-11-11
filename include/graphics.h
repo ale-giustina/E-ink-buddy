@@ -6,6 +6,7 @@
 #include <Fonts/FreeSansBold18pt7b.h>
 #include <Fonts/FreeMonoBold24pt7b.h>
 #include <Fonts/FreeMonoBold18pt7b.h>
+#include <Fonts/FreeMonoBold9pt7b.h>
 #include <Fonts/FreeSans9pt7b.h>
 #include <bitmaps.h>
 #include <weather.h>
@@ -72,8 +73,9 @@ void draw_24_h_graphs(Weather_24H &forecast_24h, tm timeinfo, int day_offset=1);
  * 
  * @param forecast_5d Reference to the 5-day weather forecast data.
  * @param timeinfo Local time information for labeling the graphs.
+ * @param shift_days Number of days to shift the forecast display (default is 0).
  */
-void draw_5_day_forecast(Weather_5D &forecast_5d, tm &timeinfo);
+void draw_5_day_forecast(Weather_5D &forecast_5d, tm &timeinfo, int shift_days=0);
 
 /**
  * @brief Draws 5-day weather graphs for temperature and precipitation.
