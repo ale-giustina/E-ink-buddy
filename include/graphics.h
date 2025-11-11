@@ -55,9 +55,10 @@ void draw_graph(T data[], int len, int x, int y, int w, int h, float min_val, fl
  * @param timeinfo Local time information to display.
  * @param current_weather Current weather information to display.
  * @param forecast_24h Optional pointer to 24-hour weather forecast data.
+ * @param five_min_mode If true, rounds time to the nearest 5 minutes for display.
  * 
  */
-void draw_time_strip(int x, int y, struct tm &timeinfo, Weather_now &current_weather, Weather_24H *forecast_24h=NULL);
+void draw_time_strip(int x, int y, struct tm &timeinfo, Weather_now &current_weather, Weather_24H *forecast_24h=NULL, bool five_min_mode=false);
 
 /**
  * @brief Draws 24-hour graphs for temperature, precipitation, humidity, and cloud cover.

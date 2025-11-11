@@ -33,6 +33,8 @@ int shift_selector = 0;
 volatile bool graphics_update_in_progress = false;
 volatile bool graphics_update_requested = false;
 
+volatile bool five_min_display_mode = false;
+
 // Task declarations
 void the_timekeeper_tsk(void * parameter);
 void api_update_tsk(void * parameter);
@@ -137,7 +139,7 @@ void renderer_tsk(void * parameter){
     getLocalTime(&timeinfo);
     
     if(xSemaphoreTake(weather_mutex, portMAX_DELAY)==pdTRUE){
-      draw_time_strip(0, 0, timeinfo, buf_now, &buf_24h);
+      draw_time_strip(0, 0, timeinfo, buf_now, &buf_24h, five_min_display_mode);
       xSemaphoreGive(weather_mutex);
     }
     if(m_state == GRAPH_24_H){
@@ -215,6 +217,12 @@ void modify_leds(void * parameter){
   machine_state working_states[] = {GRAPH_24_H, GRAPH_5_DAYS, DAY_FORECAST_5};
 
   int secs = *((int*)parameter);
+
+  if(digitalRead(input_pins[2])){
+    five_min_display_mode = !five_min_display_mode;
+    graphics_update_requested = true;
+    vTaskDelay(500 / portTICK_PERIOD_MS);
+  }
 
   if(digitalRead(input_pins[1])){
     isChoosingShift = true;
@@ -299,15 +307,32 @@ void modify_leds(void * parameter){
     
     if(secs!=old_secs){
       old_secs=secs;
-      for(int i = 5; i>=0; i--){
-        //Serial.print(secs&0b1);
-        if(secs&0b1){
-          analogWrite(led_pins[i], 20);
+      if(!five_min_display_mode){
+        for(int i = 5; i>=0; i--){
+          //Serial.print(secs&0b1);
+          if(secs&0b1){
+            analogWrite(led_pins[i], 20);
+          }
+          else{
+            analogWrite(led_pins[i], 0);
+          }
+          secs=secs>>1;
         }
-        else{
-          analogWrite(led_pins[i], 0);
+      }
+      else{
+        struct tm timeinfo;
+        getLocalTime(&timeinfo);
+        analogWrite(led_pins[5], 0); // always off 60 min led
+        for(int i = 5; i>=0; i--){
+          
+          if(i==timeinfo.tm_min%5){
+            if(i-1>=0) analogWrite(led_pins[i-1], 10);
+          }
+          else{
+            if(i-1>=0) analogWrite(led_pins[i-1], 0);
+          }
+
         }
-        secs=secs>>1;
       }
     }
   }
@@ -334,11 +359,14 @@ void the_timekeeper_tsk(void * parameter){
       if(now.tm_sec == 30){
         xTaskCreate(api_update_tsk, "API Update Task", 12288, NULL, 1, NULL);
       }
-      else if((now.tm_sec == 0 || graphics_update_requested) && !graphics_update_in_progress){
+      else if((now.tm_sec == 0 || graphics_update_requested) && !graphics_update_in_progress && !isChoosingShift && !isChoosingStates && !five_min_display_mode){
         xTaskCreate(renderer_tsk, "Renderer Task", 8192, NULL, 1, NULL);
       }
       else if(now.tm_sec == 15){
         xTaskCreate(check_wifi_connection, "WiFi Check Task", 4096, NULL, 1, NULL);
+      }
+      else if((now.tm_min % 5 == 0 && now.tm_sec == 0 && !graphics_update_in_progress && !isChoosingShift && !isChoosingStates && five_min_display_mode)||graphics_update_requested){
+        xTaskCreate(renderer_tsk, "Renderer Task", 8192, NULL, 1, NULL);
       }
       
 

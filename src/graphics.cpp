@@ -71,10 +71,14 @@ void draw_graph(T data[], int len, int x, int y, int w, int h, float min_val, fl
 
 }
 
-void draw_time_strip(int x, int y, struct tm &timeinfo, Weather_now &current_weather, Weather_24H *forecast_24h) {
+void draw_time_strip(int x, int y, struct tm &timeinfo, Weather_now &current_weather, Weather_24H *forecast_24h, bool five_min_mode) {
     // Draw time date and current weather info strip
     char buffer[30];
     display.setTextColor(GxEPD_BLACK);
+    if(five_min_mode){
+        timeinfo.tm_min = (timeinfo.tm_min / 5) * 5; // round down to nearest 5
+    }
+    mktime(&timeinfo); // normalize
     strftime(buffer, sizeof(buffer), "%H:%M", &timeinfo);
     display.setFont(&FreeMonoBold18pt7b);
     display.setTextSize(2);
