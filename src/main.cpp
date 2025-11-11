@@ -8,7 +8,9 @@
 #include <helpers.h>
 #include <graphics.h>
 
-const int led_pins[] = {22, 21, 32, 33, 26, 27}; //example led pins
+const int led_pins[] = {22, 21, 32, 33, 26, 27};
+
+const int input_pins[] = {15,2,4};
 
 SemaphoreHandle_t weather_mutex;
 Weather_5D buf_5d;
@@ -22,9 +24,12 @@ RouteInfo info_SMM[MAX_ROUTES];
 RouteInfo info_SMM_filtered[MAX_ROUTES];
 
 enum machine_state{
-  TEMP_GRAPH, DAY_FORECAST_5, BUS_ARRIVALS, GRAPH_5_DAYS, GRAPH_24_H
+  DAY_FORECAST_5, BUS_ARRIVALS_5, BUS_ARRIVALS, GRAPH_5_DAYS, GRAPH_24_H
 };
 machine_state m_state;
+
+int shift_selector = 0;
+
 // Task declarations
 void the_timekeeper_tsk(void * parameter);
 void api_update_tsk(void * parameter);
@@ -58,6 +63,9 @@ void setup() {
 
   for(int i : led_pins){
     pinMode(i, OUTPUT);
+  }
+  for(int i : input_pins){
+    pinMode(i, INPUT);
   }
 
   configTzTime("CET-1CEST-2,M3.5.0/2,M10.5.0/3", "pool.ntp.org");
@@ -130,7 +138,7 @@ void renderer_tsk(void * parameter){
     }
     if(m_state == GRAPH_24_H){
       if(xSemaphoreTake(weather_mutex, portMAX_DELAY)==pdTRUE){
-        draw_24_h_graphs(buf_24h, timeinfo, 2);
+        draw_24_h_graphs(buf_24h, timeinfo, shift_selector);
         xSemaphoreGive(weather_mutex);
       }
     }
@@ -140,15 +148,21 @@ void renderer_tsk(void * parameter){
         xSemaphoreGive(weather_mutex);
       }
     }
-    else if(m_state == BUS_ARRIVALS){
+    else if(m_state == BUS_ARRIVALS_5){
       if(xSemaphoreTake(route_mutex, portMAX_DELAY)==pdTRUE){
         draw_bus_arrivals(info_SMM_filtered, MAX_ROUTES);
         xSemaphoreGive(route_mutex);
       }
     }
+    else if(m_state == BUS_ARRIVALS){
+      if(xSemaphoreTake(route_mutex, portMAX_DELAY)==pdTRUE){
+        draw_bus_arrivals(info_SMM, MAX_ROUTES);
+        xSemaphoreGive(route_mutex);
+      }
+    }
     else if(m_state == GRAPH_5_DAYS){
       if(xSemaphoreTake(weather_mutex, portMAX_DELAY)==pdTRUE){
-        draw_5_day_graphs(buf_5d, timeinfo, 0);
+        draw_5_day_graphs(buf_5d, timeinfo, shift_selector);
         xSemaphoreGive(weather_mutex);
       }
     }
@@ -182,22 +196,67 @@ void check_wifi_connection(void * parameter){
   vTaskDelete(NULL);
 }
 
+bool isChoosingShift = false;
+bool pressedShift = false;
+int wait_second = 0;
+int old_secs = -1;
+bool update_leds = false;
 void modify_leds(void * parameter){
+
+  machine_state working_states[] = {GRAPH_24_H, GRAPH_5_DAYS};
 
   int secs = *((int*)parameter);
 
-  for(int i = 5; i>=0; i--){
-    //Serial.print(secs&0b1);
-    if(secs&0b1){
-      analogWrite(led_pins[i], 20);
+  if(digitalRead(input_pins[0])){
+    isChoosingShift = true;
+    if(!pressedShift){
+      Serial.println(shift_selector);
+      shift_selector+=1;
+      shift_selector=shift_selector%7;
+      update_leds=true;
     }
-    else{
-      analogWrite(led_pins[i], 0);
+    pressedShift=true;
+    wait_second = (secs+3)%60;
+  }
+  else{
+    pressedShift=false;
+  }
+  if(secs == wait_second){
+    isChoosingShift=false;
+  }
+
+  if(isChoosingShift){
+    if(update_leds){
+      for(int i = 0; i<=5; i++){
+        if(i<shift_selector){
+          analogWrite(led_pins[i], 100);
+        }
+        else{
+          analogWrite(led_pins[i], 0);
+        }
+      }
     }
-    secs=secs>>1;
+  }
+  else{
+    
+    if(secs!=old_secs){
+      Serial.print(secs);
+      Serial.print(" ");
+      Serial.println(old_secs);
+      old_secs=secs;
+      for(int i = 5; i>=0; i--){
+        //Serial.print(secs&0b1);
+        if(secs&0b1){
+          analogWrite(led_pins[i], 20);
+        }
+        else{
+          analogWrite(led_pins[i], 0);
+        }
+        secs=secs>>1;
+      }
+    }
   }
   //Serial.println();
-  vTaskDelete(NULL);
 
 }
 
@@ -227,11 +286,11 @@ void the_timekeeper_tsk(void * parameter){
         xTaskCreate(check_wifi_connection, "WiFi Check Task", 4096, NULL, 1, NULL);
       }
       
-      xTaskCreate(modify_leds, "Update led array", 4096, (void*)&now.tm_sec, 1, NULL);
 
       Serial.println(String("Timekeeper: ")+String(now.tm_hour)+":"+String(now.tm_min)+":"+String(now.tm_sec));
 
     }
+    modify_leds((void*)&now.tm_sec);
 
   }
 
