@@ -26,6 +26,7 @@ RouteInfo info_SMM_filtered[MAX_ROUTES];
 enum machine_state{
   DAY_FORECAST_5, BUS_ARRIVALS_5, BUS_ARRIVALS, GRAPH_5_DAYS, GRAPH_24_H
 };
+
 machine_state m_state;
 
 int shift_selector = 0;
@@ -212,6 +213,7 @@ bool pressedStates = false;
 int wait_second = 0;
 int old_secs = -1;
 bool update_leds = false;
+
 void modify_leds(void * parameter){
 
   machine_state working_states[] = {GRAPH_24_H, GRAPH_5_DAYS, DAY_FORECAST_5};

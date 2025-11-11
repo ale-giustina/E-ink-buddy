@@ -13,18 +13,29 @@
 - [X] BUG: find cause of json incomplete inputs (may be linked)
 - [X] Create renderer module to manage the E-ink display
 - [ ] Optimize buffer usage to fit more bus lines
-- [ ] Create 5 day forecast drawing
+- [X] Create 5 day forecast drawing
 - [ ] Create bus arrivals drawing
-- [ ] Create 5 day forecast graphs drawing 
-- [ ] Handle buttons and state switching between: weather types, lighting sequences and bus filter modes
+- [X] Create 5 day forecast graphs drawing
+- [X] Handle buttons and state switching between: weather types, lighting sequences and bus filter modes
 
 ## Data managing
-The main modules are: tr_api and weather_api. They are responsible for fetching and parsing data from the respective APIs. And storing them in a structured way for later use by the renderer module.
+The main modules are: 
+- ### tr_api.h 
+    Handles transport API data fetching and parsing
+- ### weather.h
+    Handles weather API data fetching and parsing
+- ### graphics.h
+    Handles all drawing functions for the e-ink display
+- ### helpers.h
+    Contains utility functions for debug and data manipulation tasks.
 
 ### Transport API
-The transport API module fetches real-time bus arrival data from a public transport API. It allows filtering based on specific bus lines and stops. The data is parsed and stored in a structured format for easy access.
+The transport API module fetches real-time bus arrival data from the trentino transport API. It allows filtering based on specific bus lines and stops. The data is parsed and stored in a structured format for easy access.
 
 ### Weather API
-The weather API module fetches weather data from the open-meteo API. It supports multiple display modes, including 24-hour forecasts and 5-day forecasts. The data is parsed and stored in a structured format for easy access.4
+The weather API module fetches weather data from the open-meteo API. It supports multiple fetch modes, including 24-hour, 5-day forecasts and current weather fetching. The data is parsed and stored in a structured format for easy access.
+
+### Graphics Module
+The graphics module manages all drawing functions for the e-ink display. It includes functions to render weather forecasts, bus arrival times(in progress), and graphical representations such as temperature and precipitation graphs.
 
 Bitmaps taken from [weather-icons](https://github.com/erikflowers/weather-icons/tree/master?tab=readme-ov-file)
