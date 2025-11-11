@@ -235,6 +235,7 @@ void modify_leds(void * parameter){
           analogWrite(led_pins[i], 0);
         }
       }
+      update_leds=false;
     }
   }
   else{
