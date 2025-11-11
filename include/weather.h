@@ -12,10 +12,12 @@ extern std::map<int, String> weather_codes;
 struct Weather_5D {
 
     struct tm last_update = {-1};
-    std::array<short, 5> codes;
-    std::array<float, 5> temp_min;
-    std::array<float, 5> temp_max;
-    std::array<short, 5> precipitation;
+    std::array<short, 14> codes;
+    std::array<float, 14> temp_min;
+    std::array<float, 14> temp_max;
+    std::array<short, 14> precipitation;
+    std::array<float, 336> temperature;
+    std::array<short, 336> precipitation_probability;
     
 };
 
@@ -25,10 +27,10 @@ struct Weather_24H {
     short code;
     float temp_min;
     float temp_max;
-    std::array<short, 24> precipitation;
-    std::array<float, 24> temperature;
-    std::array<short, 24> humidity;
-    std::array<float, 24> cloudcover;
+    std::array<short, 72> precipitation;
+    std::array<float, 72> temperature;
+    std::array<short, 72> humidity;
+    std::array<float, 72> cloudcover;
     
 };
 

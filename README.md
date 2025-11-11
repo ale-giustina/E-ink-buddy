@@ -12,6 +12,7 @@
 - [X] Create task manager to call respective processes to enable everything to run on time
 - [X] BUG: find cause of json incomplete inputs (may be linked)
 - [X] Create renderer module to manage the E-ink display
+- [ ] Optimize buffer usage to fit more bus lines
 - [ ] Create 5 day forecast drawing
 - [ ] Create bus arrivals drawing
 - [ ] Create 5 day forecast graphs drawing 

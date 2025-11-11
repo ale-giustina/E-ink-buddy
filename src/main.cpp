@@ -34,7 +34,7 @@ void modify_leds(void * parameter);
 
 void setup() {
 
-  m_state = GRAPH_24_H;
+  m_state = GRAPH_5_DAYS;
 
   start_graphics();
   display.setTextSize(3);
@@ -68,7 +68,9 @@ void setup() {
   xTaskCreate(api_update_tsk, "API Update Task", 12288, NULL, 1, NULL);
 
   vTaskDelay(8000 / portTICK_PERIOD_MS);
+
   xTaskCreate(renderer_tsk, "Renderer Task", 8192, NULL, 1, NULL);
+
   vTaskDelay(8000 / portTICK_PERIOD_MS);
   xTaskCreate(the_timekeeper_tsk, "Timekeeper Task", 8192, NULL, 1, NULL);
   
@@ -128,7 +130,7 @@ void renderer_tsk(void * parameter){
     }
     if(m_state == GRAPH_24_H){
       if(xSemaphoreTake(weather_mutex, portMAX_DELAY)==pdTRUE){
-        draw_24_h_graphs(buf_24h, timeinfo);
+        draw_24_h_graphs(buf_24h, timeinfo, 2);
         xSemaphoreGive(weather_mutex);
       }
     }
@@ -146,7 +148,7 @@ void renderer_tsk(void * parameter){
     }
     else if(m_state == GRAPH_5_DAYS){
       if(xSemaphoreTake(weather_mutex, portMAX_DELAY)==pdTRUE){
-        draw_5_day_graphs(buf_5d, timeinfo);
+        draw_5_day_graphs(buf_5d, timeinfo, 0);
         xSemaphoreGive(weather_mutex);
       }
     }
@@ -187,7 +189,7 @@ void modify_leds(void * parameter){
   for(int i = 5; i>=0; i--){
     //Serial.print(secs&0b1);
     if(secs&0b1){
-      analogWrite(led_pins[i], 50);
+      analogWrite(led_pins[i], 20);
     }
     else{
       analogWrite(led_pins[i], 0);

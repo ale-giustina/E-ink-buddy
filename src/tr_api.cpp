@@ -4,7 +4,7 @@
 std::map<int, std::array<String, 2>> routeMap;  // Global route map
 
 
-char buffer[BUFFER_SIZE]; // Global buffer for reading HTTP stream data
+static char buffer[BUFFER_SIZE]; // Global buffer for reading HTTP stream data
 
 /**
  * @brief Reads the HTTPClient stream into a buffer, handling chunked transfer encoding.
@@ -16,7 +16,7 @@ char buffer[BUFFER_SIZE]; // Global buffer for reading HTTP stream data
  * This is needed as the incoming data stream is sent in chunks formatted as <size>\r\n<data>\r\n.
  * The function continues reading until it encounters a chunk size of 0, indicating the end of the stream.
  */
-int read_stream_to_buffer(HTTPClient &client){
+int read_stream_to_buffer(HTTPClient &client, bool ignore_lists=false){
   
   WiFiClient& stream = client.getStream();
       
@@ -25,7 +25,7 @@ int read_stream_to_buffer(HTTPClient &client){
   int index_siz = 0;
   bool isPayload = false;
   char c;
-
+  bool isList = false;
   while(true){
     
     // Wait until data is available
@@ -39,6 +39,15 @@ int read_stream_to_buffer(HTTPClient &client){
     if(c == '\n'){
       isPayload = !isPayload;
       continue;
+    }
+    if(index_buff>10){
+      if(ignore_lists && c == '[') isList = true;
+      if(ignore_lists && c == ']' && isList) {
+        isList = false;
+        buffer[index_buff++] = '[';
+      }
+      if(ignore_lists && isList) continue;
+
     }
 
     if(!isPayload){
@@ -102,6 +111,7 @@ bool create_route_map(){
       success = true;
     } else {
       Serial.println("Failed to parse routes JSON");
+
       success = false;
     }
   } else {
@@ -151,7 +161,7 @@ void get_stop_info(int stopId, RouteInfo *info, int length, int shift){
       Serial.print("Fetching trips for stop: ");
       Serial.println(stopId);
 
-      int index_buff = read_stream_to_buffer(stopClient);
+      int index_buff = read_stream_to_buffer(stopClient, true);
 
       JsonDocument doc;
       DeserializationError error = deserializeJson(doc, buffer);
@@ -218,6 +228,9 @@ void get_stop_info(int stopId, RouteInfo *info, int length, int shift){
       } else {
         debug_print("Failed to parse routes JSON: ");
         debug_println(error.c_str());
+        for(int i=0; i<index_buff; i++){
+          debug_print(String(buffer[i]));
+        }
       }
     } else {
       char buffer[20];

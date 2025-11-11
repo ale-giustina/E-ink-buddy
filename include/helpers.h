@@ -90,4 +90,42 @@ bool is_connected();
  */
 bool is_DST(int year, int month, int day, int hour);
 
+/**
+ * @brief Returns max element in array
+ * 
+ * @param arr The array to search.
+ * @param len The length of the array.
+ * @return The maximum element in the array.
+ */
+template<typename M>
+M max_element(M arr[], int len) {
+    M max_val = arr[0];
+    for (int i = 1; i < len; i++) {
+        if (arr[i] > max_val) {
+            max_val = arr[i];
+        }
+    }
+    return max_val;
+}
+
+/**
+ * @brief Returns min element in array
+ * 
+ * @param arr The array to search.
+ * @param len The length of the array.
+ * @return The minimum element in the array.
+ */
+template<typename m>
+m min_element(m arr[], int len) {
+    m min_val = arr[0];
+    for (int i = 1; i < len; i++) {
+        if (arr[i] < min_val) {
+            min_val = arr[i];
+        }
+    }
+    return min_val;
+}
+
+
+
 #endif // UTILS_H

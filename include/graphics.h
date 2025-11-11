@@ -63,8 +63,9 @@ void draw_time_strip(int x, int y, struct tm &timeinfo, Weather_now &current_wea
  * 
  * @param forecast_24h Reference to the 24-hour weather forecast data.
  * @param timeinfo Local time information for labeling the graphs.
+ * @param day_offset Day offset to start the graphs from (default is 1).
  */
-void draw_24_h_graphs(Weather_24H &forecast_24h, tm &timeinfo);
+void draw_24_h_graphs(Weather_24H &forecast_24h, tm timeinfo, int day_offset=1);
 
 /**
  * @brief Draws 5-day weather forecast including temperature and precipitation graphs.
@@ -80,7 +81,7 @@ void draw_5_day_forecast(Weather_5D &forecast_5d, tm &timeinfo);
  * @param forecast_5d Reference to the 5-day weather forecast data.
  * @param timeinfo Local time information for labeling the graphs.
  */
-void draw_5_day_graphs(Weather_5D &forecast_5d, tm &timeinfo);
+void draw_5_day_graphs(Weather_5D &forecast_5d, tm timeinfo, int day_offset=1);
 
 /**
  * @brief Draws bus arrival information on the display.

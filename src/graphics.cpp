@@ -51,13 +51,17 @@ void draw_graph(T data[], int len, int x, int y, int w, int h, float min_val, fl
     float y_scale = (float)h / (max_val - min_val);
 
     for (int i = 0; i < len - 1; i++) {
-        int x0 = x + i * x_scale;
-        int y0 = y + h - (data[i] - min_val) * y_scale;
-        int x1 = x + (i + 1) * x_scale;
-        int y1 = y + h - (data[i + 1] - min_val) * y_scale;
-
+        float fx0 = x + i * x_scale;
+        float fy0 = y + h - (float)((float)data[i] - min_val) * y_scale;
+        float fx1 = x + (i + 1) * x_scale;
+        float fy1 = y + h - (float)((float)data[i + 1] - min_val) * y_scale;
+        int x0 = round(fx0);
+        int y0 = round(fy0);
+        int x1 = round(fx1);
+        int y1 = round(fy1);
 
         display.fillCircle(x0, y0, 2, color);
+
         for (int t = 0; t < thickness; t++) {
             display.drawLine(x0, y0 + t, x1, y1 + t, color);
         }
@@ -98,16 +102,51 @@ void draw_time_strip(int x, int y, struct tm &timeinfo, Weather_now &current_wea
     draw_graph(forecast_24h->precipitation.data(), 24, 10 + 380, 7, 240, 80, 0.0, 100.0, GxEPD_BLACK, 2, 10, 4, 0, 9, true);
 }
 
-void draw_24_h_graphs(Weather_24H &forecast_24h, struct tm &timeinfo) {
+void draw_24_h_graphs(Weather_24H &forecast_24h, struct tm timeinfo, int day_offset) {
 
-    draw_graph(forecast_24h.temperature.data(), 24, 30, 150, D_WIDTH - 60, D_HEIGHT - 180, forecast_24h.temp_min, forecast_24h.temp_max, GxEPD_RED, 3, 9, 2, 0, 23,false, 25);
-    draw_graph(forecast_24h.precipitation.data(), 24, 30, 150, D_WIDTH - 60, D_HEIGHT - 180, 0.0, 100.0, GxEPD_BLACK, 3, 10, 4, 0, 23,true);
-    draw_graph(forecast_24h.humidity.data(), 24, 30, 150, D_WIDTH - 60, D_HEIGHT - 180, 0.0, 100.0, GxEPD_RED, 3, 10, 4, 0, 23,true);
-    draw_graph(forecast_24h.cloudcover.data(), 24, 30, 150, D_WIDTH - 60, D_HEIGHT - 180, 0.0, 100.0, GxEPD_BLACK, 3, 10, 4, 0, 23,true);
+    display.setFont(&FreeMonoBold18pt7b);
+    display.setTextColor(GxEPD_BLACK);
+    char buffer[10];
+    timeinfo.tm_mday += day_offset;
+    mktime(&timeinfo); // normalize
+    strftime(buffer, sizeof(buffer), "%a", &timeinfo);
+    display.setCursor(30, 140);
+    display.print(buffer);
+    draw_graph(forecast_24h.temperature.data()+day_offset*24, 24, 30, 150, D_WIDTH - 60, D_HEIGHT - 180, forecast_24h.temp_min, forecast_24h.temp_max, GxEPD_RED, 3, 9, 6, 0, 23,false, 25);
+    draw_graph(forecast_24h.precipitation.data()+day_offset*24, 24, 30, 150, D_WIDTH - 60, D_HEIGHT - 180, 0.0, 100.0, GxEPD_BLACK, 3, 10, 4, 0, 23,true);
+    draw_graph(forecast_24h.humidity.data()+day_offset*24, 24, 30, 150, D_WIDTH - 60, D_HEIGHT - 180, 0.0, 100.0, GxEPD_RED, 3, 10, 4, 0, 23,true);
+    draw_graph(forecast_24h.cloudcover.data()+day_offset*24, 24, 30, 150, D_WIDTH - 60, D_HEIGHT - 180, 0.0, 100.0, GxEPD_BLACK, 3, 10, 4, 0, 23,true);
 }
 
-void draw_5_day_graphs(Weather_5D &forecast_5d, struct tm &timeinfo) {
-    // Implement drawing 5-day graphs
+void draw_5_day_graphs(Weather_5D &forecast_5d, struct tm timeinfo, int day_offset) {
+
+    display.setFont(&FreeMonoBold18pt7b);
+    display.setTextColor(GxEPD_BLACK);
+    char buffer[10];
+    timeinfo.tm_mday += day_offset;
+    mktime(&timeinfo); // normalize
+    strftime(buffer, sizeof(buffer), "%a", &timeinfo);
+    display.setCursor(30, 140);
+    display.print(buffer);
+
+    float min_temp = min_element(forecast_5d.temperature.data()+day_offset*24, 120);
+    float max_temp = max_element(forecast_5d.temperature.data()+day_offset*24, 120);
+
+    draw_graph(forecast_5d.temperature.data()+day_offset*24, 120, 30, 150, D_WIDTH - 60, D_HEIGHT - 180, min_temp, max_temp, GxEPD_RED, 3, 15, 6, 0, 120,false, 25);
+    //draw a line to separate days
+    for (int i = 1; i < 5; i++) {
+        int x_pos = 30 + i * (float)( (D_WIDTH - 60) / 5);
+        display.drawLine(x_pos, 150, x_pos, D_HEIGHT - 30, GxEPD_BLACK);
+        timeinfo.tm_mday += 1;
+        mktime(&timeinfo); // normalize
+        strftime(buffer, sizeof(buffer), "%a", &timeinfo);
+        display.setFont(&FreeMonoBold18pt7b);
+        display.setTextColor(GxEPD_BLACK);
+        display.setCursor(x_pos + 5, 140);
+        display.print(buffer);
+    }
+    draw_graph(forecast_5d.precipitation_probability.data()+day_offset*24, 120, 30, 150, D_WIDTH - 60, D_HEIGHT - 180, 0.0, 100.0, GxEPD_BLACK, 3, 10, 4, 0, 23,true);
+    
 }
 
 void draw_bus_arrivals(RouteInfo routes[], int num_routes) {
