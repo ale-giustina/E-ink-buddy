@@ -14,7 +14,7 @@
 - [X] Create renderer module to manage the E-ink display
 - [ ] Optimize buffer usage to fit more bus lines
 - [X] Create 5 day forecast drawing
-- [ ] Create bus arrivals drawing
+- [X] Create bus arrivals drawing
 - [X] Create 5 day forecast graphs drawing
 - [X] Handle buttons and state switching between: weather types, lighting sequences and bus filter modes
 

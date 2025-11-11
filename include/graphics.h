@@ -7,6 +7,7 @@
 #include <Fonts/FreeMonoBold24pt7b.h>
 #include <Fonts/FreeMonoBold18pt7b.h>
 #include <Fonts/FreeMonoBold9pt7b.h>
+#include <Fonts/FreeMonoBold12pt7b.h>
 #include <Fonts/FreeSans9pt7b.h>
 #include <bitmaps.h>
 #include <weather.h>
@@ -91,6 +92,14 @@ void draw_5_day_graphs(Weather_5D &forecast_5d, tm timeinfo, int day_offset=1);
  * 
  * @param routes Reference to an array of RouteInfo structures containing bus route information.
  * @param num_routes Number of routes in the array.
+ * @param shift Number of routes to shift the display by (default is 0).
  */
-void draw_bus_arrivals(RouteInfo routes[], int num_routes);
+void draw_bus_arrivals(RouteInfo routes[], int num_routes, int shift=0);
 
+/**
+ * @brief Draws a large time display on the screen.
+ * 
+ * @param timeinfo Local time information to display.
+ * @param five_min_mode If true, rounds time to the nearest 5 minutes for display.
+ */
+void draw_big_time(struct tm &timeinfo, bool five_min_mode=false);

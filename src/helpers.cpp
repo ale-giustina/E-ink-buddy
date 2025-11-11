@@ -143,3 +143,23 @@ bool is_DST(int year, int month, int day, int hour) {
   return false;
 }
 
+int calc_delta_time(const String& eta_str) {
+    struct tm now;
+    getLocalTime(&now);
+
+    int now_total_minutes = now.tm_hour * 60 + now.tm_min;
+
+    int eta_hour = 0;
+    int eta_minute = 0;
+
+    sscanf(eta_str.c_str(), "%d:%d", &eta_hour, &eta_minute);
+
+    int eta_total_minutes = eta_hour * 60 + eta_minute;
+
+    int delta_minutes = eta_total_minutes - now_total_minutes;
+    if (delta_minutes < -600) {
+        delta_minutes += 24 * 60; // Adjust for next day
+    }
+
+    return delta_minutes;
+}

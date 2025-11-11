@@ -19,12 +19,12 @@ Weather_now buf_now;
 
 SemaphoreHandle_t route_mutex;
 
-#define MAX_ROUTES 12
+#define MAX_ROUTES 16
 RouteInfo info_SMM[MAX_ROUTES];
 RouteInfo info_SMM_filtered[MAX_ROUTES];
 
 enum machine_state{
-  DAY_FORECAST_5, BUS_ARRIVALS_5, BUS_ARRIVALS, GRAPH_5_DAYS, GRAPH_24_H
+  DEFAULT_CLOCK, DAY_FORECAST_5, BUS_ARRIVALS_5, BUS_ARRIVALS, GRAPH_5_DAYS, GRAPH_24_H
 };
 
 machine_state m_state;
@@ -45,16 +45,15 @@ void modify_leds(void * parameter);
 
 void setup() {
 
-  m_state = DAY_FORECAST_5;
+  m_state = DEFAULT_CLOCK;
 
   start_graphics();
-  display.setTextSize(3);
+  /*
   do{
     display.fillScreen(GxEPD_BLACK);
     display.drawBitmap(D_WIDTH/2 - 75, D_HEIGHT/2 - 75, epd_bitmap_allArray[15], 150, 150, GxEPD_WHITE);
   }while(display.nextPage());
-  display.setTextSize(1);
-
+*/
   Serial.begin(115200);
   WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
   while (WiFi.status() != WL_CONNECTED) {
@@ -157,13 +156,13 @@ void renderer_tsk(void * parameter){
     }
     else if(m_state == BUS_ARRIVALS_5){
       if(xSemaphoreTake(route_mutex, portMAX_DELAY)==pdTRUE){
-        draw_bus_arrivals(info_SMM_filtered, MAX_ROUTES);
+        draw_bus_arrivals(info_SMM_filtered, MAX_ROUTES, shift_selector);
         xSemaphoreGive(route_mutex);
       }
     }
     else if(m_state == BUS_ARRIVALS){
       if(xSemaphoreTake(route_mutex, portMAX_DELAY)==pdTRUE){
-        draw_bus_arrivals(info_SMM, MAX_ROUTES);
+        draw_bus_arrivals(info_SMM, MAX_ROUTES, shift_selector);
         xSemaphoreGive(route_mutex);
       }
     }
@@ -172,6 +171,9 @@ void renderer_tsk(void * parameter){
         draw_5_day_graphs(buf_5d, timeinfo, shift_selector);
         xSemaphoreGive(weather_mutex);
       }
+    }
+    else if(m_state == DEFAULT_CLOCK){
+      draw_big_time(timeinfo, five_min_display_mode);
     }
 
   } while (display.nextPage());
@@ -216,7 +218,7 @@ bool update_leds = false;
 
 void modify_leds(void * parameter){
 
-  machine_state working_states[] = {GRAPH_24_H, GRAPH_5_DAYS, DAY_FORECAST_5};
+  machine_state working_states[] = {DEFAULT_CLOCK, GRAPH_5_DAYS, DAY_FORECAST_5, BUS_ARRIVALS, BUS_ARRIVALS_5};
 
   int secs = *((int*)parameter);
 
@@ -277,7 +279,7 @@ void modify_leds(void * parameter){
     if(update_leds){
       for(int i = 0; i<=5; i++){
         if(i<shift_selector){
-          analogWrite(led_pins[i], 100);
+          analogWrite(led_pins[i], 200);
         }
         else{
           analogWrite(led_pins[i], 0);
@@ -296,7 +298,7 @@ void modify_leds(void * parameter){
       }
       for(int i = 0; i<=5; i++){
         if(i==state_index){
-          analogWrite(led_pins[i], 100);
+          analogWrite(led_pins[i], 200);
         }
         else{
           analogWrite(led_pins[i], 0);
@@ -324,10 +326,14 @@ void modify_leds(void * parameter){
       else{
         struct tm timeinfo;
         getLocalTime(&timeinfo);
-        analogWrite(led_pins[5], 0); // always off 60 min led
+        //analogWrite(led_pins[5], secs); 
+        analogWrite(led_pins[5], 0); 
         for(int i = 5; i>=0; i--){
           
           if(i==timeinfo.tm_min%5){
+            if(i-1>=0) analogWrite(led_pins[i-1], 100);
+          }
+          else if(i<timeinfo.tm_min%5){
             if(i-1>=0) analogWrite(led_pins[i-1], 10);
           }
           else{

@@ -91,6 +91,14 @@ bool is_connected();
 bool is_DST(int year, int month, int day, int hour);
 
 /**
+ * @brief Calculate the delta time in minutes from the current time to the given ETA string.
+ * 
+ * @param eta_str The ETA string in "HH:MM" format.
+ * @return The delta time in minutes.
+ */
+int calc_delta_time(const String& eta_str);
+
+/**
  * @brief Returns max element in array
  * 
  * @param arr The array to search.

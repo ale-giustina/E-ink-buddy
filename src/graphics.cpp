@@ -121,7 +121,7 @@ void draw_24_h_graphs(Weather_24H &forecast_24h, struct tm timeinfo, int day_off
     float min_temp = min_element(forecast_24h.temperature.data()+day_offset*24, 24);
     float max_temp = max_element(forecast_24h.temperature.data()+day_offset*24, 24);
 
-    draw_graph(forecast_24h.temperature.data()+day_offset*24, 24, 30, 150, D_WIDTH - 60, D_HEIGHT - 180, forecast_24h.temp_min, forecast_24h.temp_max, GxEPD_RED, 3, 9, 6, 0, 23,false, 25);
+    draw_graph(forecast_24h.temperature.data()+day_offset*24, 24, 30, 150, D_WIDTH - 60, D_HEIGHT - 180, min_temp, max_temp, GxEPD_RED, 3, 9, 6, 0, 23,false, 25);
     draw_graph(forecast_24h.precipitation.data()+day_offset*24, 24, 30, 150, D_WIDTH - 60, D_HEIGHT - 180, 0.0, 100.0, GxEPD_BLACK, 3, 10, 4, 0, 23,true);
     draw_graph(forecast_24h.humidity.data()+day_offset*24, 24, 30, 150, D_WIDTH - 60, D_HEIGHT - 180, 0.0, 100.0, GxEPD_RED, 1, 10, 4, 0, 23,true);
     draw_graph(forecast_24h.cloudcover.data()+day_offset*24, 24, 30, 150, D_WIDTH - 60, D_HEIGHT - 180, 0.0, 100.0, GxEPD_BLACK, 1, 10, 4, 0, 23,true);
@@ -158,8 +158,85 @@ void draw_5_day_graphs(Weather_5D &forecast_5d, struct tm timeinfo, int day_offs
     
 }
 
-void draw_bus_arrivals(RouteInfo routes[], int num_routes) {
-    // Implement drawing bus arrivals
+void draw_bus_arrivals(RouteInfo routes[], int num_routes, int shift) {
+    
+    routes += shift;
+    
+    display.drawRect(10, 115, D_WIDTH - 20, D_HEIGHT - 125, GxEPD_BLACK);
+    
+    int anc_x = 10;
+    int anc_y = 115;
+    
+    int rout_index = 0;
+    while(true){
+
+        if(routes[rout_index].shortName == ""){
+            break;
+        }
+        display.drawRect(anc_x, anc_y, (D_WIDTH - 20)/2, (D_HEIGHT - 124)/5, GxEPD_BLACK);
+        display.setFont(&FreeMonoBold24pt7b);
+        display.setTextColor(GxEPD_BLACK);
+        int num = atoi(routes[rout_index].shortName.c_str());
+        display.setCursor((num>9?anc_x+5:anc_x+20), anc_y + 40);
+        display.print(num);
+        display.setFont(&FreeMonoBold18pt7b);
+
+        int del = routes[rout_index].delay;
+
+        int val = calc_delta_time(routes[rout_index].eta); //TODO: check if this needs the delay or if it is already included
+        if(val<6&&val>-1){
+            display.setTextColor(GxEPD_RED);
+        }
+        else{
+            display.setTextColor(GxEPD_BLACK);
+        }
+        display.setCursor(anc_x + ((val<10&&val>-1)?68:58), anc_y + 28);
+        if(val>99){
+            display.setCursor(anc_x + 63, anc_y + 28);
+            display.setFont(&FreeMonoBold9pt7b);
+            display.print(val);
+        }
+        else{
+            if(val<-10){
+                display.setFont(&FreeMonoBold9pt7b);
+            }
+            display.print(val);
+        }
+        display.setTextColor(GxEPD_BLACK);
+        display.setFont(&FreeMonoBold9pt7b);
+        display.setCursor(anc_x + 65, anc_y + 43);
+        display.print("min");
+        display.setFont(&FreeMonoBold18pt7b);
+        display.setCursor(anc_x + 120, anc_y + 37);
+        display.print(routes[rout_index].eta);
+        
+        if(del<10&&del>-10){
+            display.print(" ");
+        }
+        if(del>0){
+            display.setTextColor(GxEPD_RED);
+            display.print("+");
+            display.print(del);
+        }
+        else if (del<0){
+            display.setTextColor(GxEPD_BLACK);
+            display.print(del);
+        }
+        else{
+            display.setTextColor(GxEPD_BLACK);
+            display.print("-");
+        }
+        anc_y += (D_HEIGHT - 124)/5;
+        if(anc_y + (D_HEIGHT - 124)/5 > D_HEIGHT - 9){
+            anc_y = 115;
+            anc_x += (D_WIDTH - 20)/2;
+        }
+        if(anc_x + (D_WIDTH - 20)/2 > D_WIDTH - 10){
+            break;
+        }
+        rout_index++;
+
+    }
 }
 
 void draw_5_day_forecast(Weather_5D &forecast_5d, struct tm &timeinfo, int shift_days) {
@@ -204,4 +281,23 @@ void draw_5_day_forecast(Weather_5D &forecast_5d, struct tm &timeinfo, int shift
         display.print(max_temp, 1);
         display.print("C");
     }
+}
+
+void draw_big_time(struct tm &timeinfo, bool five_min_mode) {
+    // Draw big time display
+    char buffer[30];
+    display.setTextColor(GxEPD_BLACK);
+    if(five_min_mode){
+        timeinfo.tm_min = (timeinfo.tm_min / 5) * 5; // round down to nearest 5
+    }
+    mktime(&timeinfo); // normalize
+    strftime(buffer, sizeof(buffer), "%H:%M", &timeinfo);
+    display.setFont(&FreeMonoBold24pt7b);
+    display.setTextSize(4);
+    int16_t x1, y1;
+    uint16_t w, h;
+    display.getTextBounds(buffer, 0, 0, &x1, &y1, &w, &h);
+    display.setCursor((D_WIDTH - w) / 2 - x1, (D_HEIGHT +100 - h) / 2 - y1);
+    display.print(buffer);
+    display.setTextSize(1);
 }
