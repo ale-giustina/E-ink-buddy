@@ -365,7 +365,7 @@ void the_timekeeper_tsk(void * parameter){
       else if(now.tm_sec == 15){
         xTaskCreate(check_wifi_connection, "WiFi Check Task", 4096, NULL, 1, NULL);
       }
-      else if((now.tm_min % 5 == 0 && now.tm_sec == 0 && !graphics_update_in_progress && !isChoosingShift && !isChoosingStates && five_min_display_mode)||graphics_update_requested){
+      else if(((now.tm_min % 5 == 0 && now.tm_sec == 0) ||graphics_update_requested) && !graphics_update_in_progress && !isChoosingShift && !isChoosingStates && five_min_display_mode){
         xTaskCreate(renderer_tsk, "Renderer Task", 8192, NULL, 1, NULL);
       }
       
