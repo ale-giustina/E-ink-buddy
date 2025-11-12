@@ -1,5 +1,6 @@
 #include <weather.h>
 
+// Map of weather codes to descriptions
 std::map<int, String> weather_codes = {
     {0,  "Clear sky"},
     {1,  "Mainly clear"},
@@ -38,6 +39,7 @@ void get_weather_5d(Weather_5D &w_ob, bool force_update){
 
     getLocalTime(&now);
 
+    // Check if update is needed
     if(w_ob.last_update.tm_sec==-1 || w_ob.last_update.tm_min<now.tm_min-WEATHER_EXP_5D || w_ob.last_update.tm_hour!=now.tm_hour || force_update){
 
         debug_println("Updating...");
@@ -52,7 +54,6 @@ void get_weather_5d(Weather_5D &w_ob, bool force_update){
         if (httpCode == 200) {
             
             String payload = weatherClient.getString();
-            //Serial.println(payload);
             JsonDocument doc;
             
             if (!deserializeJson(doc, payload)) {
@@ -96,7 +97,7 @@ void get_weather_5d(Weather_5D &w_ob, bool force_update){
                 }
 
             } else {
-            Serial.println("Failed to parse routes JSON");
+            Serial.println("Failed to parse 5d weather JSON");
             debug_println(payload);
             }
         } else {
@@ -116,6 +117,7 @@ void get_weather_24h(Weather_24H &w_ob, bool force_update){
 
     getLocalTime(&now);
 
+    // Check if update is needed
     if(w_ob.last_update.tm_sec==-1 || w_ob.last_update.tm_min<now.tm_min-WEATHER_EXP_24H || w_ob.last_update.tm_hour!=now.tm_hour || force_update){
 
         debug_println("Updating...");
@@ -130,7 +132,6 @@ void get_weather_24h(Weather_24H &w_ob, bool force_update){
         if (httpCode == 200) {
             
             String payload = weatherClient.getString();
-            //Serial.println(payload);
             JsonDocument doc;
             
             if (!deserializeJson(doc, payload)) {
@@ -167,7 +168,7 @@ void get_weather_24h(Weather_24H &w_ob, bool force_update){
                 }
 
             } else {
-            Serial.println("Failed to parse routes JSON");
+            Serial.println("Failed to parse 24h weather JSON");
             debug_println(payload);
             }
         } else {
@@ -187,6 +188,7 @@ void get_current_weather(Weather_now &w_ob, bool force_update){
 
     getLocalTime(&now);
 
+    // Check if update is needed
     if(w_ob.last_update.tm_sec==-1 || w_ob.last_update.tm_min<now.tm_min-WEATHER_EXP_NOW || w_ob.last_update.tm_hour!=now.tm_hour || force_update){
 
         debug_println("Updating...");
@@ -201,7 +203,6 @@ void get_current_weather(Weather_now &w_ob, bool force_update){
         if (httpCode == 200) {
             
             String payload = weatherClient.getString();
-            //Serial.println(payload);
             JsonDocument doc;
             
             if (!deserializeJson(doc, payload)) {
@@ -219,7 +220,7 @@ void get_current_weather(Weather_now &w_ob, bool force_update){
                 w_ob.windspeed = current["wind_speed_10m"].as<float>();
 
             } else {
-            Serial.println("Failed to parse routes JSON");
+            Serial.println("Failed to parse current weather JSON");
             debug_println(payload);
             }
         } else {

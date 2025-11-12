@@ -8,32 +8,39 @@
 #include <helpers.h>
 #include <graphics.h>
 
+// Pin definitions
 const int led_pins[] = {22, 21, 32, 33, 26, 27};
-
 const int input_pins[] = {15,2,4};
 
-SemaphoreHandle_t weather_mutex;
+// Global structures
 Weather_5D buf_5d;
 Weather_24H buf_24h;
 Weather_now buf_now;
 
+// Mutexes for thread safety
+SemaphoreHandle_t weather_mutex;
 SemaphoreHandle_t route_mutex;
 
+// Route information (10 + 6 that can be shifted)
 #define MAX_ROUTES 16
 RouteInfo info_SMM[MAX_ROUTES];
 RouteInfo info_SMM_filtered[MAX_ROUTES];
 
+// Machine states
 enum machine_state{
   DEFAULT_CLOCK, DAY_FORECAST_5, BUS_ARRIVALS_5, BUS_ARRIVALS, GRAPH_5_DAYS, GRAPH_24_H
 };
-
 machine_state m_state;
 
+
+// Selector for shifting routes
 int shift_selector = 0;
 
+// Graphics update flags
 volatile bool graphics_update_in_progress = false;
 volatile bool graphics_update_requested = false;
 
+// Five minute display mode flag
 volatile bool five_min_display_mode = false;
 
 // Task declarations
@@ -45,27 +52,37 @@ void modify_leds(void * parameter);
 
 void setup() {
 
+  // Initial state
   m_state = DEFAULT_CLOCK;
 
   start_graphics();
   
+  // Display startup image
   do{
     display.fillScreen(GxEPD_BLACK);
     display.drawBitmap(D_WIDTH/2 - 75, D_HEIGHT/2 - 75, epd_bitmap_allArray[15], 150, 150, GxEPD_WHITE);
   }while(display.nextPage());
 
+  // Initialize serial communication
   Serial.begin(115200);
+
+  // Connect to WiFi
   WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
   while (WiFi.status() != WL_CONNECTED) {
     delay(1000);
     Serial.println("Connecting to WiFi...");
   }
   Serial.println("Connected to WiFi");
+
+  // Disable debug mode
   enable_debug = false;
+
+  // Create route map
   while(!create_route_map()){
     vTaskDelay(1000 / portTICK_PERIOD_MS);
   };
 
+  // Initialize LED pins
   for(int i : led_pins){
     pinMode(i, OUTPUT);
   }
@@ -73,18 +90,24 @@ void setup() {
     pinMode(i, INPUT);
   }
 
+  // Configure timezone and NTP servers
   configTzTime("CET-1CEST-2,M3.5.0/2,M10.5.0/3", "pool.ntp.org");
 
+  // Create mutexes
   weather_mutex = xSemaphoreCreateMutex();
   route_mutex = xSemaphoreCreateMutex();
 
+  // Start first API update task
   xTaskCreate(api_update_tsk, "API Update Task", 12288, NULL, 1, NULL);
 
   vTaskDelay(8000 / portTICK_PERIOD_MS);
 
+  // Start renderer task
   xTaskCreate(renderer_tsk, "Renderer Task", 8192, NULL, 1, NULL);
 
   vTaskDelay(8000 / portTICK_PERIOD_MS);
+
+  // Start timekeeper task
   xTaskCreate(the_timekeeper_tsk, "Timekeeper Task", 8192, NULL, 1, NULL);
   
 }
@@ -134,6 +157,8 @@ void renderer_tsk(void * parameter){
   Serial.print("Rendering... ");
   Serial.printf("Free heap:  %u\n", esp_get_free_heap_size());
   display.firstPage();
+  
+  // Call functions based on current state
   do {
     struct tm timeinfo;
     getLocalTime(&timeinfo);
@@ -222,12 +247,14 @@ void modify_leds(void * parameter){
 
   int secs = *((int*)parameter);
 
+  // Toggle five minute display mode
   if(digitalRead(input_pins[2])){
     five_min_display_mode = !five_min_display_mode;
     graphics_update_requested = true;
     vTaskDelay(500 / portTICK_PERIOD_MS);
   }
 
+  // Handle shift selection input
   if(digitalRead(input_pins[1])){
     isChoosingShift = true;
     isChoosingStates = false;
@@ -244,6 +271,7 @@ void modify_leds(void * parameter){
     pressedShift=false;
   }
 
+  // Handle state selection input
   if(digitalRead(input_pins[0])){
     isChoosingStates = true;
     isChoosingShift = false;
@@ -270,6 +298,7 @@ void modify_leds(void * parameter){
     pressedStates=false;
   }
 
+  // Exit selection visualization after timeout
   if(secs == wait_second){
     isChoosingShift=false;
     isChoosingStates=false;
@@ -277,6 +306,7 @@ void modify_leds(void * parameter){
     graphics_update_requested = true;
   }
 
+  // Update LEDs based on current selection
   if(isChoosingShift){
     if(update_leds){
       for(int i = 0; i<=5; i++){
@@ -313,6 +343,7 @@ void modify_leds(void * parameter){
     
     if(secs!=old_secs){
       old_secs=secs;
+      // Update LEDs based on seconds
       if(!five_min_display_mode){
         for(int i = 5; i>=0; i--){
           //Serial.print(secs&0b1);
@@ -328,7 +359,9 @@ void modify_leds(void * parameter){
       else{
         struct tm timeinfo;
         getLocalTime(&timeinfo);
-        //analogWrite(led_pins[5], secs); 
+        //analogWrite(led_pins[5], secs); //If you want to show seconds with the sixth LED
+
+        // Update LEDs based on minutes
         analogWrite(led_pins[5], 0); 
         for(int i = 5; i>=0; i--){
           
@@ -346,7 +379,6 @@ void modify_leds(void * parameter){
       }
     }
   }
-  //Serial.println();
 
 }
 
@@ -359,36 +391,43 @@ void the_timekeeper_tsk(void * parameter){
   for(;;){
     getLocalTime(&now);
 
+    // Check for time anomalies and restart if detected
     if(now.tm_sec > prev_sec.tm_sec+4 && now.tm_min == prev_sec.tm_min && now.tm_hour == prev_sec.tm_hour){
       WiFi.disconnect();
       ESP.restart();
     }
 
+    // Handle tasks based on the current second
     if(now.tm_sec != prev_sec.tm_sec){
       prev_sec = now;
+      // At 30 seconds, update API data
       if(now.tm_sec == 30){
         xTaskCreate(api_update_tsk, "API Update Task", 12288, NULL, 1, NULL);
       }
+      // Every minute, request graphics update if in default clock mode
       else if((now.tm_sec == 0 || graphics_update_requested) && !graphics_update_in_progress && !isChoosingShift && !isChoosingStates && !five_min_display_mode){
         xTaskCreate(renderer_tsk, "Renderer Task", 8192, NULL, 1, NULL);
       }
+      // At 15 seconds, check WiFi connection
       else if(now.tm_sec == 15){
         xTaskCreate(check_wifi_connection, "WiFi Check Task", 4096, NULL, 1, NULL);
       }
+      // Every five minutes, update graphics in five minute display mode
       else if(((now.tm_min % 5 == 0 && now.tm_sec == 0) ||graphics_update_requested) && !graphics_update_in_progress && !isChoosingShift && !isChoosingStates && five_min_display_mode){
         xTaskCreate(renderer_tsk, "Renderer Task", 8192, NULL, 1, NULL);
       }
       
-
       Serial.println(String("Timekeeper: ")+String(now.tm_hour)+":"+String(now.tm_min)+":"+String(now.tm_sec));
 
     }
+    // Update LEDs
     modify_leds((void*)&now.tm_sec);
 
   }
 
 }
 
+// Not needed
 void loop() {
 
   vTaskDelete(NULL);

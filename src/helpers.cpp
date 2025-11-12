@@ -115,35 +115,45 @@ void debug_print_weather_now(const Weather_now& weather, bool override_debug) {
 }
 
 bool is_connected() {
-  if (WiFi.status() != WL_CONNECTED) return false;
-  
-  HTTPClient http;
-  http.begin("http://clients3.google.com/generate_204"); // lightweight test
-  int httpCode = http.GET();
-  http.end();
 
-  return (httpCode == 204);
+    // I found WL_CONNECTED to not be reliable enough on its own so this
+    // makes a lightweight HTTP request to confirm connectivity
+    // This is run every minute
+
+    if (WiFi.status() != WL_CONNECTED) return false;
+
+    HTTPClient http;
+    http.begin("http://clients3.google.com/generate_204"); // lightweight test
+    int httpCode = http.GET();
+    http.end();
+
+    return (httpCode == 204);
 }
 
 bool is_DST(int year, int month, int day, int hour) {
-  // DST: from last Sunday in March 2:00 → last Sunday in October 3:00
-  if (month < 3 || month > 10) return false;
-  if (month > 3 && month < 10) return true;
 
-  int lastSunday;
-  if (month == 3) {
+    // The oraArrivoAFermataSelezionata provides the time in a wierd way
+    // only time will tell if this is the correct solution
+
+    // DST: from last Sunday in March 2:00 → last Sunday in October 3:00
+    if (month < 3 || month > 10) return false;
+    if (month > 3 && month < 10) return true;
+
+    int lastSunday;
+    if (month == 3) {
     // Find last Sunday in March
     lastSunday = 31 - ((5 * year / 4 + 4) % 7);
     return (day > lastSunday || (day == lastSunday && hour >= 2));
-  } else if (month == 10) {
+    } else if (month == 10) {
     // Find last Sunday in October
     lastSunday = 31 - ((5 * year / 4 + 1) % 7);
     return !(day > lastSunday || (day == lastSunday && hour >= 3));
-  }
-  return false;
+    }
+    return false;
 }
 
 int calc_delta_time(const String& eta_str) {
+
     struct tm now;
     getLocalTime(&now);
 
@@ -158,7 +168,7 @@ int calc_delta_time(const String& eta_str) {
 
     int delta_minutes = eta_total_minutes - now_total_minutes;
     if (delta_minutes < -600) {
-        delta_minutes += 24 * 60; // Adjust for next day
+        delta_minutes += 24 * 60; // Adjust for next day only if difference is more than 10 hours negative
     }
 
     return delta_minutes;
