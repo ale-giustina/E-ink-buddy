@@ -48,12 +48,12 @@ void setup() {
   m_state = DEFAULT_CLOCK;
 
   start_graphics();
-  /*
+  
   do{
     display.fillScreen(GxEPD_BLACK);
     display.drawBitmap(D_WIDTH/2 - 75, D_HEIGHT/2 - 75, epd_bitmap_allArray[15], 150, 150, GxEPD_WHITE);
   }while(display.nextPage());
-*/
+
   Serial.begin(115200);
   WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
   while (WiFi.status() != WL_CONNECTED) {

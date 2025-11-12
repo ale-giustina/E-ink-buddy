@@ -197,7 +197,7 @@ void draw_bus_arrivals(RouteInfo routes[], int num_routes, int shift) {
             display.print(val);
         }
         else{
-            if(val<-10){
+            if(val<-9){
                 display.setFont(&FreeMonoBold9pt7b);
             }
             display.print(val);
@@ -297,7 +297,16 @@ void draw_big_time(struct tm &timeinfo, bool five_min_mode) {
     int16_t x1, y1;
     uint16_t w, h;
     display.getTextBounds(buffer, 0, 0, &x1, &y1, &w, &h);
-    display.setCursor((D_WIDTH - w) / 2 - x1, (D_HEIGHT +100 - h) / 2 - y1);
+    display.setCursor((D_WIDTH - w) / 2 - x1, (D_HEIGHT +70 - h) / 2 - y1);
     display.print(buffer);
     display.setTextSize(1);
+    
+    int positions[5] = {D_WIDTH - 50+10, D_WIDTH - 160+10, D_WIDTH - 280+10, D_WIDTH - 402+10, D_WIDTH - 523+10};
+
+    for(int i = 0; i < 5; i++){
+        display.drawBitmap(positions[i], D_HEIGHT - 30, icons_bitmap_allArray[4-i], 30, 30, GxEPD_BLACK);
+    }
+
+    
+
 }
