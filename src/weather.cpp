@@ -32,6 +32,8 @@ std::map<int, String> weather_codes = {
     {99, "Thunderstorm with heavy hail"}
 };
 
+String latitude = "46.0679";
+String longitude = "11.1211";
 
 void get_weather_5d(Weather_5D &w_ob, bool force_update){
 
@@ -46,7 +48,7 @@ void get_weather_5d(Weather_5D &w_ob, bool force_update){
 
         HTTPClient weatherClient;
 
-        String url = "https://api.open-meteo.com/v1/forecast?latitude=46.0679&longitude=11.1211&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max&hourly=temperature_2m,precipitation_probability&models=best_match&timezone=Europe%2FBerlin&forecast_days=14";
+        String url = "https://api.open-meteo.com/v1/forecast?latitude=" + latitude + "&longitude=" + longitude + "&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max&hourly=temperature_2m,precipitation_probability&models=best_match&timezone=Europe%2FBerlin&forecast_days=14";
 
         weatherClient.begin(url);
         int httpCode = weatherClient.GET();
@@ -124,7 +126,7 @@ void get_weather_24h(Weather_24H &w_ob, bool force_update){
 
         HTTPClient weatherClient;
 
-        String url = "https://api.open-meteo.com/v1/forecast?latitude=46.0679&longitude=11.1211&daily=temperature_2m_max,temperature_2m_min,weather_code&hourly=temperature_2m,precipitation_probability,relative_humidity_2m,cloud_cover&models=best_match&timezone=Europe%2FBerlin&forecast_days=7";
+        String url = "https://api.open-meteo.com/v1/forecast?latitude=" + latitude + "&longitude=" + longitude + "&daily=temperature_2m_max,temperature_2m_min,weather_code&hourly=temperature_2m,precipitation_probability,relative_humidity_2m,cloud_cover&models=best_match&timezone=Europe%2FBerlin&forecast_days=7";
 
         weatherClient.begin(url);
         int httpCode = weatherClient.GET();
@@ -195,7 +197,7 @@ void get_current_weather(Weather_now &w_ob, bool force_update){
 
         HTTPClient weatherClient;
 
-        String url = "https://api.open-meteo.com/v1/forecast?latitude=46.0679&longitude=11.1211&models=best_match&current=temperature_2m,relative_humidity_2m,precipitation,weather_code,wind_speed_10m&timezone=Europe%2FBerlin&forecast_days=1";
+        String url = "https://api.open-meteo.com/v1/forecast?latitude=" + latitude + "&longitude=" + longitude + "&models=best_match&current=temperature_2m,relative_humidity_2m,precipitation,weather_code,wind_speed_10m&timezone=Europe%2FBerlin&forecast_days=1";
 
         weatherClient.begin(url);
         int httpCode = weatherClient.GET();
