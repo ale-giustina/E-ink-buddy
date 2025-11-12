@@ -61,7 +61,7 @@ void setup() {
     Serial.println("Connecting to WiFi...");
   }
   Serial.println("Connected to WiFi");
-  enable_debug = true;
+  enable_debug = false;
   while(!create_route_map()){
     vTaskDelay(1000 / portTICK_PERIOD_MS);
   };
@@ -230,6 +230,7 @@ void modify_leds(void * parameter){
 
   if(digitalRead(input_pins[1])){
     isChoosingShift = true;
+    isChoosingStates = false;
     if(!pressedShift){
       Serial.println(shift_selector);
       shift_selector+=1;
@@ -245,6 +246,7 @@ void modify_leds(void * parameter){
 
   if(digitalRead(input_pins[0])){
     isChoosingStates = true;
+    isChoosingShift = false;
     if(!pressedStates){
       int current_state_index = 0;
       for(int i = 0; i<sizeof(working_states)/sizeof(machine_state); i++){
