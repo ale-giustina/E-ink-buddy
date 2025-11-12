@@ -60,6 +60,29 @@ int read_stream_to_buffer(HTTPClient &client, bool ignore_lists=false){
       buffer[index_buff++] = c;
       index_siz = 0;
     }
+    // ignore "tripId":"0004373042025091020260610"
+    if(memcmp(buffer + index_buff - 36, "\"tripId\":", 9) == 0) {
+      index_buff -= 37;
+    }
+    //"oraArrivoEffettivaAFermataSelezionata": null,
+    //"oraArrivoProgrammataAFermataSelezionata": null,
+    //"corsaPiuVicinaADataRiferimento": false,
+    if (index_buff >= 44 && memcmp(buffer + index_buff - 44, "\"oraArrivoEffettivaAFermataSelezionata\":null,", 44) == 0) {
+        index_buff -= 45;
+    }
+
+    if (index_buff >= 50 && memcmp(buffer + index_buff - 46, "\"oraArrivoProgrammataAFermataSelezionata\":null,", 46) == 0) {
+        index_buff -= 47;
+    }
+
+    if (index_buff >= 40 && memcmp(buffer + index_buff - 38, "\"corsaPiuVicinaADataRiferimento\":false,", 38) == 0) {
+        index_buff -= 39;
+    }
+
+    // "departureTime": "XX:XX:XX",
+    if (index_buff >= 28 && memcmp(buffer + index_buff - 28, "\"departureTime\":", 16) == 0) {
+        index_buff -= 27;
+    }
 
 
     if(index_buff >= BUFFER_SIZE-1){
@@ -367,7 +390,7 @@ void get_stop_info_filtered(int stopId, RouteInfo *info, int length, int routeId
         }
         debug_println("Filtered stop info fetch successful.");
         debug_println("Payload size: " + String(index_buff) + " bytes");
-        
+        Serial.println(buffer);
         // Exit retry loop on success
         break;
 

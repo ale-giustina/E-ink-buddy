@@ -183,7 +183,7 @@ void draw_bus_arrivals(RouteInfo routes[], int num_routes, int shift) {
 
         int del = routes[rout_index].delay;
 
-        int val = calc_delta_time(routes[rout_index].eta); //TODO: check if this needs the delay or if it is already included
+        int val = calc_delta_time(routes[rout_index].eta)+del;
         if(val<6&&val>-1){
             display.setTextColor(GxEPD_RED);
         }

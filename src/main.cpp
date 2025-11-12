@@ -218,7 +218,7 @@ bool update_leds = false;
 
 void modify_leds(void * parameter){
 
-  machine_state working_states[] = {DEFAULT_CLOCK, GRAPH_5_DAYS, DAY_FORECAST_5, BUS_ARRIVALS, BUS_ARRIVALS_5};
+  machine_state working_states[] = {DEFAULT_CLOCK, BUS_ARRIVALS_5, BUS_ARRIVALS, DAY_FORECAST_5, GRAPH_5_DAYS, GRAPH_24_H};
 
   int secs = *((int*)parameter);
 
