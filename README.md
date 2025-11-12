@@ -12,12 +12,12 @@
 - [X] Create task manager to call respective processes to enable everything to run on time
 - [X] BUG: find cause of json incomplete inputs (may be linked)
 - [X] Create renderer module to manage the E-ink display
-- [ ] Optimize buffer usage to fit more bus lines
+- [X] Optimize buffer usage to fit more bus lines
 - [X] Create 5 day forecast drawing
 - [X] Create bus arrivals drawing
 - [X] Create 5 day forecast graphs drawing
 - [X] Handle buttons and state switching between: weather types, lighting sequences and bus filter modes
-
+- [ ] Update README and add schematics and images
 ## Data managing
 The main modules are: 
 - ### tr_api.h 
