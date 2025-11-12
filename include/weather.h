@@ -52,7 +52,7 @@ struct Weather_now {
 #define WEATHER_EXP_24H (10)
 
 //the expiration time in minutes of the current weather packet
-#define WEATHER_EXP_NOW (5)
+#define WEATHER_EXP_NOW (10)
 
 /**
 *

@@ -11,13 +11,20 @@ struct Weather_5D;
 struct Weather_24H;
 struct Weather_now;
 
-// Returns formatted part of the local time
+/**
+ * @brief Helper function to format time components as strings.
+ * 
+ * @param c The time component character ('H' for hours, 'M' for minutes, 'S' for seconds).
+ * @return Formatted time component as a String.
+ */
 String time_helper(char c);
 
-// Prints timestamp in "YYYY-MM-DD HH:MM:SS - " format
+/**
+ * @brief Print the current timestamp for debugging.
+ */
 void print_timestamp();
 
-extern bool enable_debug;
+extern bool enable_debug; 
 
 /**
  * @brief Print debug message with newline if debugging is enabled.
@@ -133,7 +140,5 @@ m min_element(m arr[], int len) {
     }
     return min_val;
 }
-
-
 
 #endif // UTILS_H

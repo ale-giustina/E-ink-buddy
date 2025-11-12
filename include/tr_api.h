@@ -8,11 +8,15 @@
 #include <map>
 #include <helpers.h>
 
+/**
+ * @brief Structure to hold route information.
+ * 
+ */
 struct RouteInfo {
-    String shortName;
-    String longName;
-    int delay;
-    String eta;
+    String shortName; // e.g., "3", "5/", "L1"
+    String longName; // e.g., "Cortesano Gardolo P.Dante Villazzano 3"
+    int delay; // Delay in minutes
+    String eta; // Estimated time of arrival in "HH:MM" format
 };
 
 extern bool enable_debug;

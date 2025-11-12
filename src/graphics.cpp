@@ -178,9 +178,16 @@ void draw_bus_arrivals(RouteInfo routes[], int num_routes, int shift) {
         display.setTextColor(GxEPD_BLACK);
         int num = atoi(routes[rout_index].shortName.c_str());
         display.setCursor((num>9?anc_x+5:anc_x+20), anc_y + 40);
-        display.print(num);
-        display.setFont(&FreeMonoBold18pt7b);
-
+        if(num==0 && routes[rout_index].shortName!="0"){
+            //non numeric route
+            String shortName = routes[rout_index].shortName;
+            display.setCursor((shortName.length()>1?anc_x+5:anc_x+20), anc_y + 40);
+            display.print(routes[rout_index].shortName);
+        }
+        else{
+            display.print(num);
+            display.setFont(&FreeMonoBold18pt7b);
+        }
         int del = routes[rout_index].delay;
 
         int val = calc_delta_time(routes[rout_index].eta)+del;
@@ -306,7 +313,5 @@ void draw_big_time(struct tm &timeinfo, bool five_min_mode) {
     for(int i = 0; i < 5; i++){
         display.drawBitmap(positions[i], D_HEIGHT - 30, icons_bitmap_allArray[4-i], 30, 30, GxEPD_BLACK);
     }
-
-    
 
 }

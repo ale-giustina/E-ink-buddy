@@ -1,3 +1,5 @@
+#ifndef GRAPHICS_H
+#define GRAPHICS_H
 #include <GxEPD2_3C.h>
 #include <Fonts/FreeMonoBold24pt7b.h>
 #include <Fonts/FreeMonoBold18pt7b.h>
@@ -84,6 +86,7 @@ void draw_5_day_forecast(Weather_5D &forecast_5d, tm &timeinfo, int shift_days=0
  * 
  * @param forecast_5d Reference to the 5-day weather forecast data.
  * @param timeinfo Local time information for labeling the graphs.
+ * @param day_offset Day offset to start the graphs from (default is 1).
  */
 void draw_5_day_graphs(Weather_5D &forecast_5d, tm timeinfo, int day_offset=1);
 
@@ -103,3 +106,5 @@ void draw_bus_arrivals(RouteInfo routes[], int num_routes, int shift=0);
  * @param five_min_mode If true, rounds time to the nearest 5 minutes for display.
  */
 void draw_big_time(struct tm &timeinfo, bool five_min_mode=false);
+
+#endif
