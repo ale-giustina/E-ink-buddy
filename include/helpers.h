@@ -11,13 +11,20 @@ struct Weather_5D;
 struct Weather_24H;
 struct Weather_now;
 
-// Returns formatted part of the local time
+/**
+ * @brief Helper function to format time components as strings.
+ * 
+ * @param c The time component character ('H' for hours, 'M' for minutes, 'S' for seconds).
+ * @return Formatted time component as a String.
+ */
 String time_helper(char c);
 
-// Prints timestamp in "YYYY-MM-DD HH:MM:SS - " format
+/**
+ * @brief Print the current timestamp for debugging.
+ */
 void print_timestamp();
 
-extern bool enable_debug;
+extern bool enable_debug; 
 
 /**
  * @brief Print debug message with newline if debugging is enabled.
@@ -89,5 +96,49 @@ bool is_connected();
  * @return true if in DST, false otherwise.
  */
 bool is_DST(int year, int month, int day, int hour);
+
+/**
+ * @brief Calculate the delta time in minutes from the current time to the given ETA string.
+ * 
+ * @param eta_str The ETA string in "HH:MM" format.
+ * @return The delta time in minutes.
+ */
+int calc_delta_time(const String& eta_str);
+
+/**
+ * @brief Returns max element in array
+ * 
+ * @param arr The array to search.
+ * @param len The length of the array.
+ * @return The maximum element in the array.
+ */
+template<typename M>
+M max_element(M arr[], int len) {
+    M max_val = arr[0];
+    for (int i = 1; i < len; i++) {
+        if (arr[i] > max_val) {
+            max_val = arr[i];
+        }
+    }
+    return max_val;
+}
+
+/**
+ * @brief Returns min element in array
+ * 
+ * @param arr The array to search.
+ * @param len The length of the array.
+ * @return The minimum element in the array.
+ */
+template<typename m>
+m min_element(m arr[], int len) {
+    m min_val = arr[0];
+    for (int i = 1; i < len; i++) {
+        if (arr[i] < min_val) {
+            min_val = arr[i];
+        }
+    }
+    return min_val;
+}
 
 #endif // UTILS_H
