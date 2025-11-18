@@ -36,7 +36,7 @@ void draw_graph(T data[], int len, int x, int y, int w, int h, float min_val, fl
                 if (cyclic_label < 0) cyclic_label += x_cyclic; // ensure positive
                 display.print((int)cyclic_label, 1);
             } else {
-                display.print((int)label, 1);
+                display.print((int)label);
             }
         }
         // Draw ticks and labels on y-axis
@@ -45,7 +45,7 @@ void draw_graph(T data[], int len, int x, int y, int w, int h, float min_val, fl
             display.drawLine(x - 5, yt, x, yt, GxEPD_BLACK);
             float label = min_val + i * (max_val - min_val) / y_ticks;
             display.setCursor(x - 30, yt + 5);
-            display.print((int)label, 1);
+            display.print((int)label);
         }
     }
 
