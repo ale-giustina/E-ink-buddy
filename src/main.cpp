@@ -129,8 +129,8 @@ void api_update_tsk(void * parameter){
   Serial.println("Done weather, fetching route info...");
   
   if(xSemaphoreTake(route_mutex, portMAX_DELAY)==pdTRUE){
-    get_stop_info(407, info_SMM, MAX_ROUTES);
-    get_stop_info_filtered(407, info_SMM_filtered, MAX_ROUTES, 400, false, true);
+    get_stop_info(247, info_SMM, MAX_ROUTES);
+    get_stop_info_filtered(247, info_SMM_filtered, MAX_ROUTES, 400, false, true);// 247 piazza dante, 407 SMM
     xSemaphoreGive(route_mutex);
   }
 

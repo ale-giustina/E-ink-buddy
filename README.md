@@ -19,7 +19,7 @@
 - [X] Handle buttons and state switching between: weather types, lighting sequences and bus filter modes
 - [ ] Update README and add schematics and images
 ## Data managing
-The main modules are: 
+The main modules are 
 - ### tr_api.h 
     Handles transport API data fetching and parsing
 - ### weather.h
