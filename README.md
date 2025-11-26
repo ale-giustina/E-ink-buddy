@@ -1,5 +1,5 @@
-# E-Ink info Display
-A simple e-ink display project that shows time, date, weather, and other useful information.
+# E-Ink buddy
+A simple e-ink display that shows time, date, weather, and other useful information.
 ## Features
 - Time and Date display
 - 5 minute update option with led minute indicator or 1 minute update with second indicator
@@ -23,7 +23,7 @@ A simple e-ink display project that shows time, date, weather, and other useful 
 - 3D printed case (STL files included (to be uploaded))
 
 ## Wiring
-
+![Wiring Diagram](images/circuit.svg)
 ## Software
 The project uses the following external libraries:
 - GxEPD2 by ZinggJM
