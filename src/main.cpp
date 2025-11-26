@@ -1,3 +1,6 @@
+// Author: Alessandro Giustina
+// Description: Main application file
+
 #include <Arduino.h>
 #include "secrets.h"
 #include <WiFi.h>

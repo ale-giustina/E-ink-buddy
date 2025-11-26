@@ -1,3 +1,6 @@
+// Author: Alessandro Giustina
+// Description: Graphics handling implementation file
+
 #include <graphics.h>
 
 // Initialize the display

@@ -1,3 +1,6 @@
+// Author: Alessandro Giustina
+// Description: Weather data handling header file
+
 #ifndef WEATHER_H
 #define WEATHER_H
 #include <map>

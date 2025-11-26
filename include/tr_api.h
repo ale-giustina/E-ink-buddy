@@ -1,3 +1,6 @@
+// Author: Alessandro Giustina
+// Description: Transit API interaction header file
+
 #ifndef TR_API_H
 #define TR_API_H
 

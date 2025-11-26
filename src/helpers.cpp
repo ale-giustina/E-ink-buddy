@@ -1,3 +1,6 @@
+// Author: Alessandro Giustina
+// Description: Utility helper functions and debugging tools
+
 #include <helpers.h>
 
 // Returns formatted part of the local time

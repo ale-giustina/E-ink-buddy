@@ -1,3 +1,6 @@
+// Author: Alessandro Giustina
+// Description: Utility helper functions and debugging tools
+
 #ifndef UTILS_H
 #define UTILS_H
 
