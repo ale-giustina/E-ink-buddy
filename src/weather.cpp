@@ -1,3 +1,6 @@
+// Author: Alessandro Giustina
+// Description: Weather data handling implementation file
+
 #include <weather.h>
 
 // Map of weather codes to descriptions

@@ -1,3 +1,6 @@
+// Author: Alessandro Giustina
+// Description: Graphics handling header file
+
 #ifndef GRAPHICS_H
 #define GRAPHICS_H
 #include <GxEPD2_3C.h>

@@ -1,3 +1,6 @@
+// Author: Alessandro Giustina
+// Description: Transit API interaction implementation file
+
 #include <tr_api.h>
 
 
