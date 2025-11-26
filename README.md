@@ -50,7 +50,7 @@ For more information consult the header file that contains documentation for all
 Thanks to [trentino-trasporti-api](https://github.com/matteocontrini/trentino-trasporti-api) for the API documentation.
 Sample API calls can be found in the `Sample_calls` folder, both for buses and weather.
 
-### helper.cpp
+### helpers.cpp
 Contains various printing and debugging functions used throughout the project.
 
 ### main.cpp
