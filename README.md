@@ -20,7 +20,7 @@ A simple e-ink display that shows time, date, weather, and other useful informat
 
 - 3 capacitive buttons
 
-- 3D printed case (STL files included (to be uploaded))
+- ![3D printed case](Models/E-paper_v3.f3d)
 
 ## Wiring
 ![Wiring Diagram](images/circuit.svg)
