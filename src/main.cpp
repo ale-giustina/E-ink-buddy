@@ -44,7 +44,7 @@ volatile bool graphics_update_in_progress = false;
 volatile bool graphics_update_requested = false;
 
 // Five minute display mode flag
-volatile bool five_min_display_mode = false;
+volatile bool five_min_display_mode = true;
 
 // Task declarations
 void the_timekeeper_tsk(void * parameter);
